@@ -1,5 +1,5 @@
 /**
- * GACHA PACK OPENER - LOGIQUE APPLICATIVE MODERNE
+ * GACHA PACK OPENER - LOGIQUE APPLICATIVE CONFIGURÉE
  */
 
 let currentSeriesKey = ""; 
@@ -7,6 +7,7 @@ let currentUser = null;
 let userInventory = {};
 let isHolding = false; 
 
+// 1. GESTION DES DONNÉES SÉRIES
 function initializeSeriesMenu() {
     const select = document.getElementById('series-select');
     if (!select) return;
@@ -28,10 +29,24 @@ function initializeSeriesMenu() {
     currentSeriesKey = keys[0];
 }
 
+// 2. STOCKAGE DE SESSIONS (LOCALSTORAGE)
 function loadUserData(username) {
     currentUser = username;
     const savedData = localStorage.getItem(`gacha_user_${username}`);
     userInventory = savedData ? JSON.parse(savedData) : {};
+    
+    // Rétablissement des labels manquants sur les anciens profils de test
+    Object.keys(userInventory).forEach(name => {
+        if (!userInventory[name].label) {
+            let rarity = userInventory[name].rarity || "commune";
+            let label = "Commune";
+            if (rarity === "peu-commune") label = "Peu Commune";
+            if (rarity === "rare") label = "Rare";
+            if (rarity === "rare-holo") label = "Rare Holo ✨";
+            userInventory[name].label = label;
+        }
+    });
+
     if (!savedData) saveUserData();
     localStorage.setItem('gacha_active_session', username);
 }
@@ -58,6 +73,7 @@ function updateUI() {
     }
 }
 
+// 3. MOTEUR ALÉATOIRE PONDÉRÉ
 function getRandomItem(rarityList) {
     return rarityList[Math.floor(Math.random() * rarityList.length)];
 }
@@ -67,15 +83,19 @@ function drawPack() {
     const pack = [];
     
     for (let i = 0; i < series.rates.commune_count; i++) {
-        pack.push({ name: getRandomItem(series.pool.commune), rarity: "commune", label: "Commune" });
+        const item = getRandomItem(series.pool.commune);
+        pack.push({ name: item.name, img: item.img, rarity: "commune", label: "Commune" });
     }
     for (let i = 0; i < series.rates.peu_commune_count; i++) {
-        pack.push({ name: getRandomItem(series.pool.peuCommune), rarity: "peu-commune", label: "Peu Commune" });
+        const item = getRandomItem(series.pool.peuCommune);
+        pack.push({ name: item.name, img: item.img, rarity: "peu-commune", label: "Peu Commune" });
     }
     if (Math.random() * 100 <= series.rates.rare_holo_chance) {
-        pack.push({ name: getRandomItem(series.pool.rareHolo), rarity: "rare-holo", label: "Rare Holo ✨" });
+        const item = getRandomItem(series.pool.rareHolo);
+        pack.push({ name: item.name, img: item.img, rarity: "rare-holo", label: "Rare Holo ✨" });
     } else {
-        pack.push({ name: getRandomItem(series.pool.rare), rarity: "rare", label: "Rare" });
+        const item = getRandomItem(series.pool.rare);
+        pack.push({ name: item.name, img: item.img, rarity: "rare", label: "Rare" });
     }
     return pack;
 }
@@ -84,10 +104,13 @@ function addToInventory(pack) {
     pack.forEach(item => {
         if (userInventory[item.name]) {
             userInventory[item.name].quantity += 1;
+            userInventory[item.name].label = item.label; 
         } else {
             userInventory[item.name] = {
                 rarity: item.rarity,
                 name: item.name,
+                img: item.img, // Sauvegarde le nom de l'image liée
+                label: item.label, 
                 quantity: 1
             };
         }
@@ -102,7 +125,7 @@ function renderInventory() {
 
     const items = Object.values(userInventory);
     if (items.length === 0) {
-        grid.innerHTML = '<p style="grid-column: 1/-1; opacity: 0.5;">Ton inventaire est vide.</p>';
+        grid.innerHTML = '<p style="grid-column: 1/-1; opacity: 0.5; text-align: center;">Ton inventaire est vide.</p>';
         return;
     }
 
@@ -110,30 +133,66 @@ function renderInventory() {
     items.sort((a, b) => rarityOrder[a.rarity] - rarityOrder[b.rarity]);
 
     items.forEach(item => {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = `inv-item inv-${item.rarity}`;
-        itemDiv.innerHTML = `
-            <span>${item.name}</span>
-            <span class="badge">x${item.quantity}</span>
+        const cardDiv = document.createElement('div');
+        cardDiv.className = `card ${item.rarity}`;
+        
+        // FIX : Remplacement de "img/moc.png" par "img/\${item.img || 'moc.png'}" par sécurité
+        cardDiv.innerHTML = `
+            <img src="img/${item.img || 'moc.png'}" alt="${item.name}" class="card-bg-image">
+            <div class="card-content-overlay">
+                <div style="font-size: 8px; opacity: 0.9; display: flex; justify-content: space-between; width: 100%; padding: 0 2px; font-weight: bold;">
+                    <span>${item.label}</span>
+                    <span class="badge" style="transform: scale(0.85); padding: 1px 4px;">x${item.quantity}</span>
+                </div>
+                <div style="font-weight: bold; line-height: 1.1; padding: 0 3px; font-size: 9px; margin-bottom: 2px;">${item.name}</div>
+            </div>
         `;
-        grid.appendChild(itemDiv);
+        grid.appendChild(cardDiv);
+        cardDiv.addEventListener('click', () => openCardInPortal(item));
     });
 }
 
-// --- PORTAL UNIFIÉ APIS MODÈLE MOBILE SÉCURISÉ ---
+// 4. MOTEUR INTERACTIF CARD 3D ISOLÉ (POINTER EVENTS UNIFIÉS)
 function setupPortalEvents() {
     const wrapper = document.getElementById('portal-wrapper');
     if (!wrapper) return;
 
-    // FIX FIX FIX : Utilisation exclusive de pointerdown (Fonctionne instantanément au doigt ET à la souris)
     wrapper.addEventListener('pointerdown', (e) => {
         isHolding = true;
         wrapper.classList.add('grabbing');
         wrapper.style.transition = 'none';
-        
-        // Sécurise la capture du mouvement pour que le téléphone ne perde pas le fil
         wrapper.setPointerCapture(e.pointerId); 
     });
+
+    wrapper.addEventListener('pointermove', (e) => {
+        if (!isHolding) return;
+
+        const rect = wrapper.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        let px = (x / rect.width) - 0.5;
+        let py = (y / rect.height) - 0.5;
+
+        px = Math.max(-0.7, Math.min(0.7, px));
+        py = Math.max(-0.7, Math.min(0.7, py));
+
+        const maxRotation = 30; 
+        const rotateX = -py * maxRotation;
+        const rotateY = px * maxRotation;
+
+        wrapper.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        wrapper.style.boxShadow = `${-px * 45}px ${-py * 45}px 55px rgba(0,0,0,0.8)`;
+
+        const shine = wrapper.querySelector('.card-shine');
+        if (shine) {
+            shine.style.opacity = '1';
+            shine.style.transform = `translate(${(px * 15)}%, ${(py * 15)}%) scale(1.5)`;
+        }
+    });
+
+    wrapper.addEventListener('pointerup', handleRelease);
+    wrapper.addEventListener('pointercancel', handleRelease);
 }
 
 function openCardInPortal(item) {
@@ -143,24 +202,24 @@ function openCardInPortal(item) {
 
     if (!portal || !wrapper || !overlay) return;
 
-    // On applique l'identité graphique et la couleur de rareté sur le conteneur du portail
-    wrapper.className = `portal-card-wrapper ${item.rarity}`;
+    wrapper.style.transform = 'rotateX(0deg) rotateY(0deg)';
+    wrapper.className = `portal-card-wrapper card ${item.rarity}`;
 
-    // Rendu des textes internes ajustés à la taille adaptative
+    // FIX : Utilise item.img de manière dynamique
     wrapper.innerHTML = `
-        <div style="font-size: 0.85em; opacity: 0.8; font-weight: bold; text-transform: uppercase; margin-bottom: 15px;">${item.label}</div>
-        <div style="font-size: 1.35em; font-weight: bold; padding: 0 10px; text-transform: uppercase;">${item.name}</div>
+        <img src="img/${item.img || 'moc.png'}" alt="${item.name}" class="card-bg-image">
+        <div class="card-content-overlay">
+            <div style="font-size: 0.85em; opacity: 0.9; font-weight: bold; text-transform: uppercase;">${item.label}</div>
+            <div style="font-size: 1.35em; font-weight: bold; padding: 0 10px; text-transform: uppercase;">${item.name}</div>
+        </div>
         <div class="card-shine"></div>
     `;
 
     portal.classList.add('active');
     overlay.classList.add('active');
-
-    // FIX MOBILE CRUCIAL : Bloque radicalement le défilement et fige le viewport au niveau du body
     document.body.classList.add('modal-open');
 }
 
-// Fonction globale pour relâcher le doigt ou la souris
 function handleRelease() {
     if (!isHolding) return;
     isHolding = false;
@@ -169,7 +228,7 @@ function handleRelease() {
     if (!wrapper) return;
 
     wrapper.classList.remove('grabbing');
-    wrapper.style.transition = 'transform 0.3s ease, box-shadow 0.3s ease';
+    wrapper.style.transition = 'transform 0.4s ease, box-shadow 0.4s ease';
     wrapper.style.transform = 'rotateX(0deg) rotateY(0deg)';
     wrapper.style.boxShadow = '0 20px 40px rgba(0,0,0,0.6)';
     
@@ -177,62 +236,11 @@ function handleRelease() {
     if (shine) shine.style.opacity = '0';
 }
 
-window.addEventListener('pointerup', handleRelease);
-
-// Fermeture de l'overlay sombre au clic
-document.getElementById('overlay').addEventListener('click', () => {
-    const portal = document.getElementById('zoom-portal');
-    const overlay = document.getElementById('overlay');
-    const wrapper = document.getElementById('portal-wrapper');
-
-    isHolding = false;
-    if (portal) portal.classList.remove('active');
-    if (overlay) overlay.classList.remove('active');
-
-    if (wrapper) {
-        wrapper.style.transform = 'rotateX(0deg) rotateY(0deg)';
-        const shine = wrapper.querySelector('.card-shine');
-        if (shine) shine.style.opacity = '0';
-    }
-
-    // FIX MOBILE CRUCIAL : Restaure le défilement normal de l'inventaire à la fermeture
-    document.body.classList.remove('modal-open');
+window.addEventListener('pointerup', () => {
+    if (isHolding) handleRelease();
 });
 
-// Calcul de mouvement unifié PointerMove
-window.addEventListener('pointermove', (e) => {
-    if (!isHolding) return;
-
-    const wrapper = document.getElementById('portal-wrapper');
-    if (!wrapper) return;
-
-    const rect = wrapper.getBoundingClientRect();
-    
-    // Les coordonnées captent nativement la position absolue du doigt ou du curseur
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    let px = (x / rect.width) - 0.5;
-    let py = (y / rect.height) - 0.5;
-
-    px = Math.max(-0.7, Math.min(0.7, px));
-    py = Math.max(-0.7, Math.min(0.7, py));
-
-    const maxRotation = 35; 
-    const rotateX = -py * maxRotation;
-    const rotateY = px * maxRotation;
-
-    wrapper.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-    wrapper.style.boxShadow = `${-px * 45}px ${-py * 45}px 55px rgba(0,0,0,0.8)`;
-
-    const shine = wrapper.querySelector('.card-shine');
-    if (shine) {
-        shine.style.opacity = '1';
-        shine.style.transform = `translate(${(px * 20)}%, ${(py * 20)}%) scale(1.5)`;
-    }
-});
-
-// 5. ATTACHEMENT DES ÉVÉNEMENTS ÉCRANS AU CHARGEMENT DE LA PAGE
+// 5. ATTACHEMENT DES ÉVÉNEMENTS GENERAUX
 window.addEventListener('DOMContentLoaded', () => {
     initializeSeriesMenu();
     setupPortalEvents();
@@ -259,34 +267,49 @@ window.addEventListener('DOMContentLoaded', () => {
         currentSeriesKey = e.target.value;
     });
 
+    document.getElementById('overlay').addEventListener('click', () => {
+        const portal = document.getElementById('zoom-portal');
+        const overlay = document.getElementById('overlay');
+        const wrapper = document.getElementById('portal-wrapper');
+
+        isHolding = false;
+        if (portal) portal.classList.remove('active');
+        if (overlay) overlay.classList.remove('active');
+
+        if (wrapper) {
+            wrapper.style.transform = 'rotateX(0deg) rotateY(0deg)';
+            const shine = wrapper.querySelector('.card-shine');
+            if (shine) shine.style.opacity = '0';
+        }
+        document.body.classList.remove('modal-open');
+    });
+
     document.getElementById('draw-btn').addEventListener('click', () => {
         const container = document.getElementById('pack-container');
         if (!container) return;
-        container.innerHTML = ''; 
+        container.innerHTML = '';
 
         const newPack = drawPack();
         addToInventory(newPack);
-
-        newPack.sort(() => Math.random() - 0.5);
-
-        newPack.forEach(item => {
-            const cardDiv = document.createElement('div');
-            cardDiv.className = `card ${item.rarity}`;
-            cardDiv.innerHTML = `
-                <div style="font-size: 10px; opacity: 0.8;">${item.label}</div>
-                <div style="margin-top: 15px; font-weight: bold;">${item.name}</div>
-            `;
-            container.appendChild(cardDiv);
-            
-            cardDiv.addEventListener('click', () => openCardInPortal(item));
-        });
-
-        renderInventory();
+newPack.sort(() => Math.random() - 0.5);
+newPack.forEach(item => {
+        const cardDiv = document.createElement('div');
+        cardDiv.className = `card ${item.rarity}`;
+        cardDiv.innerHTML = `
+            <img src="img/${item.img || 'moc.png'}" alt="${item.name}" class="card-bg-image"> 
+            <div class="card-content-overlay"> 
+                <div style="font-size: 9px; opacity: 0.9; margin-bottom: 5px;">${item.label}</div> 
+                <div style="font-weight: bold; line-height: 1.1; padding: 0 5px;">${item.name}</div> 
+            </div>
+        `;
+        container.appendChild(cardDiv);
+        cardDiv.addEventListener('click', () => openCardInPortal(item));
     });
-
-    const savedSession = localStorage.getItem('gacha_active_session');
-    if (savedSession) {
-        loadUserData(savedSession);
-    }
-    updateUI();
+renderInventory();
+});
+const savedSession = localStorage.getItem('gacha_active_session');
+if (savedSession) {
+loadUserData(savedSession);
+}
+updateUI();
 });

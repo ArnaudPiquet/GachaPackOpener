@@ -22,8 +22,9 @@ Le projet est organisé de manière modulaire afin de séparer la structure, les
 1. **Persistance Locale Apatride (No-Password)** : L'authentification par pseudonyme unique génère ou charge instantanément un profil utilisateur. L'inventaire est sérialisé en JSON et sauvegardé en temps réel via l'API `localStorage` du navigateur.
 2. **Moteur Aléatoire Pondéré (Drop Rate)** : Gestion dynamique des tirages basée sur le fichier de configuration. Le script s'adapte au nombre de communes et peu communes requises, puis calcule la probabilité du slot garanti (Rare ou Rare Holo).
 3. **Moteur d'effet 3D isolé par Portail ("Portal Cloner")** : Pour éliminer les saccades et les glitchs d'affichage liés aux flux Flexbox/Grid de la page, la carte sélectionnée est projetée dans un conteneur HTML indépendant (`#zoom-portal`). C'est ce portail qui encaisse l'ensemble des calculs de perspective 3D.
-4. **Butée Angulaire (Anti-Retournement)** : Intégration d'un système de serrage mathématique (`Clamp`) qui limite l'inclinaison physique à 35 degrés maximum, évitant ainsi que la carte ne se retourne sur elle-même si l'utilisateur déplace brutalement son curseur.
-5. **Réflectivité Holographique Interne** : Un calque dynamique `.card-shine` simule un film plastique brillant en se déplaçant de manière synchronisée avec la souris pour maximiser l'effet de profondeur.
+4. **Butée Angulaire (Anti-Retournement)** : Intégration d'un système de serrage mathématique (`Clamp`) qui limite l'inclinaison physique à 30 degrés maximum, évitant ainsi que la carte ne se retourne sur elle-même si l'utilisateur déplace brutalement son curseur.
+5. **Réflectivité Holographique Interne** : Un calque dynamique `.card-shine` simule un film plastique brillant en se déplaçant de manière synchronisée avec le pointeur pour maximiser l'effet de profondeur.
+6. **Double interaction (Tirages & Collection)** : Les cartes de l'inventaire profitent de la même structure responsive et sont inspectables en 3D à tout moment d'un simple clic.
 
 ## 🔧 Maintenance et Extension de la Banque de Cartes
 
