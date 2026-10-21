@@ -1,5 +1,5 @@
 /**
- * GACHA PACK OPENER - LOGIQUE APPLICATIVE CONFIGURÉE
+ * GACHA PACK OPENER - HUB & CARD DEX SYSTEM
  */
 
 let currentSeriesKey = ""; 
@@ -7,74 +7,96 @@ let currentUser = null;
 let userInventory = {};
 let isHolding = false; 
 
-// 1. GESTION DES DONNÉES SÉRIES
-function initializeSeriesMenu() {
-    const select = document.getElementById('series-select');
-    if (!select) return;
-    select.innerHTML = "";
+// 1. INTIALIZE EXTENSION SELECTION MENUS
+function initializeSeriesMenus() {
+    const shopSelect = document.getElementById(
+        'series-select-shop'
+    );
+    const binderSelect = document.getElementById(
+        'series-select-binder'
+    );
+    
+    if (!shopSelect || !binderSelect) return;
+    
+    shopSelect.innerHTML = "";
+    binderSelect.innerHTML = "";
     
     if (typeof cardData === 'undefined') {
-        alert("Erreur : Le fichier series.js est manquant.");
+        alert("Erreur : Le fichier series.js est introuvable.");
         return;
     }
 
     const keys = Object.keys(cardData);
     keys.forEach(key => {
-        const option = document.createElement('option');
-        option.value = key;
-        option.textContent = cardData[key].name;
-        select.appendChild(option);
+        const opt1 = document.createElement('option');
+        opt1.value = key;
+        opt1.textContent = cardData[key].name;
+        shopSelect.appendChild(opt1);
+
+        const opt2 = document.createElement('option');
+        opt2.value = key;
+        opt2.textContent = cardData[key].name;
+        binderSelect.appendChild(opt2);
     });
 
+    // CRITICAL FIX: Explicitly assign the first string key ("series1")
     currentSeriesKey = keys[0];
 }
 
-// 2. STOCKAGE DE SESSIONS (LOCALSTORAGE)
+// 2. USER SESSIONS & LOCALSTORAGE SYNC
 function loadUserData(username) {
     currentUser = username;
-    const savedData = localStorage.getItem(`gacha_user_${username}`);
+    const savedData = localStorage.getItem(
+        `gacha_user_${username}`
+    );
     userInventory = savedData ? JSON.parse(savedData) : {};
     
-    Object.keys(userInventory).forEach(name => {
-        if (!userInventory[name].label) {
-            let rarity = userInventory[name].rarity || "commune";
-            let label = "Commune";
-            if (rarity === "peu-commune") label = "Peu Commune";
-            if (rarity === "rare") label = "Rare";
-            if (rarity === "rare-holo") label = "Rare Holo ✨";
-            userInventory[name].label = label;
-        }
-    });
-
     if (!savedData) saveUserData();
     localStorage.setItem('gacha_active_session', username);
 }
 
 function saveUserData() {
     if (currentUser) {
-        localStorage.setItem(`gacha_user_${currentUser}`, JSON.stringify(userInventory));
+        localStorage.setItem(
+            `gacha_user_${currentUser}`, 
+            JSON.stringify(userInventory)
+        );
     }
 }
 
-function updateUI() {
-    const authScreen = document.getElementById('auth-screen');
-    const gameScreen = document.getElementById('game-screen');
+// NAVIGATION ROUTER BETWEEN SCREENS
+function switchScreen(screenId) {
+    const screens = [
+        'auth-screen', 
+        'hub-screen', 
+        'shop-screen', 
+        'binder-screen'
+    ];
     
-    if (currentUser) {
-        authScreen.classList.remove('active');
-        gameScreen.classList.add('active');
-        document.getElementById('display-username').textContent = currentUser;
-        renderInventory();
-    } else {
-        authScreen.add('active');
-        gameScreen.classList.remove('active');
-        document.getElementById('pack-container').innerHTML = '';
+    screens.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (id === screenId) {
+            el.classList.add('active');
+        } else {
+            el.classList.remove('active');
+        }
+    });
+
+    if (screenId === 'hub-screen') {
+        document.getElementById('hub-username')
+            .textContent = currentUser;
+    }
+    if (screenId === 'binder-screen') {
+        renderBinderDex();
     }
 }
 
-// 3. MOTEUR ALÉATOIRE PONDÉRÉ
+// 3. RNG GACHA LOOT ENGINE
 function getRandomItem(rarityList) {
-    return rarityList[Math.floor(Math.random() * rarityList.length)];
+    return rarityList[
+        Math.floor(Math.random() * rarityList.length)
+    ];
 }
 
 function drawPack() {
@@ -83,18 +105,38 @@ function drawPack() {
     
     for (let i = 0; i < series.rates.commune_count; i++) {
         const item = getRandomItem(series.pool.commune);
-        pack.push({ name: item.name, img: item.img, rarity: "commune", label: "Commune" });
+        pack.push({ 
+            name: item.name, 
+            img: item.img, 
+            rarity: "commune", 
+            label: "Commune" 
+        });
     }
     for (let i = 0; i < series.rates.peu_commune_count; i++) {
         const item = getRandomItem(series.pool.peuCommune);
-        pack.push({ name: item.name, img: item.img, rarity: "peu-commune", label: "Peu Commune" });
+        pack.push({ 
+            name: item.name, 
+            img: item.img, 
+            rarity: "peu-commune", 
+            label: "Peu Commune" 
+        });
     }
     if (Math.random() * 100 <= series.rates.rare_holo_chance) {
         const item = getRandomItem(series.pool.rareHolo);
-        pack.push({ name: item.name, img: item.img, rarity: "rare-holo", label: "Rare Holo ✨" });
+        pack.push({ 
+            name: item.name, 
+            img: item.img, 
+            rarity: "rare-holo", 
+            label: "Rare Holo ✨" 
+        });
     } else {
         const item = getRandomItem(series.pool.rare);
-        pack.push({ name: item.name, img: item.img, rarity: "rare", label: "Rare" });
+        pack.push({ 
+            name: item.name, 
+            img: item.img, 
+            rarity: "rare", 
+            label: "Rare" 
+        });
     }
     return pack;
 }
@@ -103,7 +145,6 @@ function addToInventory(pack) {
     pack.forEach(item => {
         if (userInventory[item.name]) {
             userInventory[item.name].quantity += 1;
-            userInventory[item.name].label = item.label; 
         } else {
             userInventory[item.name] = {
                 rarity: item.rarity,
@@ -117,40 +158,110 @@ function addToInventory(pack) {
     saveUserData();
 }
 
-function renderInventory() {
-    const grid = document.getElementById('inventory-grid');
-    if (!grid) return;
-    grid.innerHTML = '';
-
-    const items = Object.values(userInventory);
-    if (items.length === 0) {
-        grid.innerHTML = '<p style="grid-column: 1/-1; opacity: 0.5; text-align: center;">Ton inventaire est vide.</p>';
-        return;
+// EXTRA SAFETY FUNCTION: Explicitly locks unowned cards
+function applyCardLockSafety(cardElement, isOwned) {
+    if (!isOwned) {
+        cardElement.classList.add('locked');
+    } else {
+        cardElement.classList.remove('locked');
     }
-
-    const rarityOrder = { 'rare-holo': 0, 'rare': 1, 'peu-commune': 2, 'commune': 3 };
-    items.sort((a, b) => rarityOrder[a.rarity] - rarityOrder[b.rarity]);
-
-    items.forEach(item => {
-        const cardDiv = document.createElement('div');
-        cardDiv.className = `card ${item.rarity}`;
-        
-        cardDiv.innerHTML = `
-            <img src="img/${item.img || 'moc.png'}" alt="${item.name}" class="card-bg-image">
-            <div class="card-content-overlay">
-                <div style="font-size: 8px; opacity: 0.9; display: flex; justify-content: space-between; width: 100%; padding: 0 2px; font-weight: bold;">
-                    <span>${item.label}</span>
-                    <span class="badge" style="transform: scale(0.85); padding: 1px 4px;">x${item.quantity}</span>
-                </div>
-                <div style="font-weight: bold; line-height: 1.1; padding: 0 3px; font-size: 9px; margin-bottom: 2px;">${item.name}</div>
-            </div>
-        `;
-        grid.appendChild(cardDiv);
-        cardDiv.addEventListener('click', () => openCardInPortal(item));
-    });
 }
 
-// 4. MOTEUR INTERACTIF CARD 3D ISOLÉ
+// CARD DEX / BINDER GRIDS BUILDER
+function renderBinderDex() {
+    const grid = document.getElementById('inventory-grid');
+    const ratioLabel = document.getElementById('completion-ratio');
+    if (!grid) return;
+    
+    grid.innerHTML = '';
+    const series = cardData[currentSeriesKey];
+    const allCardsInGame = [];
+    
+    const categories = [
+        { 
+            pool: series.pool.rareHolo, 
+            rarity: 'rare-holo', 
+            label: 'Rare Holo ✨' 
+        },
+        { 
+            pool: series.pool.rare, 
+            rarity: 'rare', 
+            label: 'Rare' 
+        },
+        { 
+            pool: series.pool.peuCommune, 
+            rarity: 'peu-commune', 
+            label: 'Peu Commune' 
+        },
+        { 
+            pool: series.pool.commune, 
+            rarity: 'commune', 
+            label: 'Commune' 
+        }
+    ];
+
+    categories.forEach(cat => {
+        if (cat.pool) {
+            cat.pool.forEach(card => {
+                allCardsInGame.push({
+                    name: card.name,
+                    img: card.img,
+                    rarity: cat.rarity,
+                    label: cat.label
+                });
+            });
+        }
+    });
+
+    let ownedUniqueCount = 0;
+
+    allCardsInGame.forEach(gameCard => {
+        const cardDiv = document.createElement('div');
+        
+        // Strict inventory mapping condition
+        const isOwned = (
+            userInventory[gameCard.name] !== undefined && 
+            userInventory[gameCard.name] !== null &&
+            userInventory[gameCard.name].quantity > 0
+        );
+        const qty = isOwned ? userInventory[gameCard.name].quantity : 0;
+
+        if (isOwned) ownedUniqueCount++;
+
+        cardDiv.className = `card ${gameCard.rarity}`;
+        
+        cardDiv.innerHTML = `
+            <img src="img/${gameCard.img || 'moc.png'}" 
+                 alt="${gameCard.name}" class="card-bg-image">
+            <div class="card-content-overlay">
+                <div style="font-size: 8px; opacity: 0.9; display: flex; 
+                            justify-content: space-between; width: 100%; 
+                            padding: 0 2px; font-weight: bold;">
+                    <span>${gameCard.label}</span>
+                    <span class="badge" style="transform: scale(0.85); 
+                                padding: 1px 4px;">x${qty}</span>
+                </div>
+                <div style="font-weight: bold; line-height: 1.1; 
+                            padding: 0 3px; font-size: 9px; 
+                            margin-bottom: 2px;">${gameCard.name}</div>
+            </div>
+        `;
+        
+        // Active the strict fallback layout mask safety
+        applyCardLockSafety(cardDiv, isOwned);
+        
+        grid.appendChild(cardDiv);
+        cardDiv.addEventListener('click', () => 
+            openCardInPortal(gameCard)
+        );
+    });
+
+    if (ratioLabel) {
+        ratioLabel.textContent = `${ownedUniqueCount} / ${allCardsInGame.length}`;
+    }
+}
+
+// --- PERSPECTIVE 3D INTERACTIVE CONTROL ---
 function setupPortalEvents() {
     const wrapper = document.getElementById('portal-wrapper');
     if (!wrapper) return;
@@ -185,7 +296,7 @@ function setupPortalEvents() {
         const shine = wrapper.querySelector('.card-shine');
         if (shine) {
             shine.style.opacity = '1';
-            shine.style.transform = `translate(${(px * 15)}%, ${(py * 15)}%) scale(1.5)`;
+            shine.style.transform = `translate(${px * 15}%, ${py * 15}%) scale(1.5)`;
         }
     });
 
@@ -200,15 +311,21 @@ function openCardInPortal(item) {
 
     if (!portal || !wrapper || !overlay) return;
 
-    // Réinitialisation des styles et injection propre des classes combinées
     wrapper.style.transform = 'rotateX(0deg) rotateY(0deg)';
     wrapper.className = `portal-card-wrapper card ${item.rarity}`;
 
     wrapper.innerHTML = `
-        <img src="img/${item.img || 'moc.png'}" alt="${item.name}" class="card-bg-image">
+        <img src="img/${item.img || 'moc.png'}" 
+             alt="${item.name}" class="card-bg-image">
         <div class="card-content-overlay">
-            <div style="font-size: 0.85em; opacity: 0.9; font-weight: bold; text-transform: uppercase;">${item.label}</div>
-            <div style="font-size: 1.35em; font-weight: bold; padding: 0 10px; text-transform: uppercase;">${item.name}</div>
+            <div style="font-size: 0.85em; opacity: 0.9; 
+                        font-weight: bold; text-transform: uppercase;">
+                ${item.label}
+            </div>
+            <div style="font-size: 1.35em; font-weight: bold; 
+                        padding: 0 10px; text-transform: uppercase;">
+                ${item.name}
+            </div>
         </div>
         <div class="card-shine"></div>
     `;
@@ -221,66 +338,74 @@ function openCardInPortal(item) {
 function handleRelease() {
     if (!isHolding) return;
     isHolding = false;
-    
-    const wrapper = document.getElementById('portal-wrapper');
-    if (!wrapper) return;
-
-    wrapper.classList.remove('grabbing');
-    wrapper.style.transition = 'transform 0.4s ease, box-shadow 0.4s ease';
-    wrapper.style.transform = 'rotateX(0deg) rotateY(0deg)';
-    wrapper.style.boxShadow = '0 20px 40px rgba(0,0,0,0.6)';
-    
-    const shine = wrapper.querySelector('.card-shine');
-    if (shine) shine.style.opacity = '0';
+const wrapper = document.getElementById('portal-wrapper');
+if (!wrapper) return;
+wrapper.classList.remove('grabbing');
+wrapper.style.transition = 'transform 0.4s ease, box-shadow 0.4s ease';
+wrapper.style.transform = 'rotateX(0deg) rotateY(0deg)';
+wrapper.style.boxShadow = '0 20px 40px rgba(0,0,0,0.6)';
+const shine = wrapper.querySelector('.card-shine');
+if (shine) shine.style.opacity = '0';
 }
-
 window.addEventListener('pointerup', () => {
-    if (isHolding) handleRelease();
+if (isHolding) handleRelease();
 });
-
-// 5. ATTACHEMENT DES ÉVÉNEMENTS GENERAUX
+// 4. ATTACH ROUTER APPLICATION EVENT LISTENERS
 window.addEventListener('DOMContentLoaded', () => {
-    initializeSeriesMenu();
-    setupPortalEvents();
-
-    document.getElementById('login-btn').addEventListener('click', () => {
-        const username = document.getElementById('username-input').value.trim();
-        if (!username) {
-            alert("Veuillez saisir un pseudo valide.");
-            return;
-        }
-        loadUserData(username);
-        updateUI();
-    });
-
-    document.getElementById('logout-btn').addEventListener('click', () => {
-        localStorage.removeItem('gacha_active_session');
-        currentUser = null;
-        userInventory = {};
-        document.getElementById('username-input').value = '';
-        updateUI();
-    });
-
-    document.getElementById('series-select').addEventListener('change', (e) => {
-        currentSeriesKey = e.target.value;
-    });
-
-    document.getElementById('overlay').addEventListener('click', () => {
-        const portal = document.getElementById('zoom-portal');
-        const overlay = document.getElementById('overlay');
-        const wrapper = document.getElementById('portal-wrapper');
-
-        isHolding = false;
-        if (portal) portal.classList.remove('active');
-        if (overlay) overlay.classList.remove('active');
-
-        if (wrapper) {
-            wrapper.style.transform = 'rotateX(0deg) rotateY(0deg)';
-            const shine = wrapper.querySelector('.card-shine');
-            if (shine) shine.style.opacity = '0';
-        }
-        document.body.classList.remove('modal-open');
-    });
+initializeSeriesMenus();
+setupPortalEvents();
+document.getElementById('login-btn').addEventListener('click', () => {
+const username = document.getElementById('username-input')
+.value.trim();
+if (!username) {
+alert("Veuillez saisir un pseudo valide.");
+return;
+}
+loadUserData(username);
+switchScreen('hub-screen');
+});
+document.getElementById('hub-logout-btn').addEventListener('click', () => {
+localStorage.removeItem('gacha_active_session');
+currentUser = null;
+userInventory = {};
+document.getElementById('username-input').value = '';
+switchScreen('auth-screen');
+});
+document.getElementById('to-shop-btn')
+.addEventListener('click', () => switchScreen('shop-screen'));
+document.getElementById('to-binder-btn')
+.addEventListener('click', () => switchScreen('binder-screen'));
+document.querySelectorAll('.back-to-hub-btn').forEach(btn => {
+btn.addEventListener('click', () => switchScreen('hub-screen'));
+});
+document.getElementById('series-select-shop')
+.addEventListener('change', (e) => {
+currentSeriesKey = e.target.value;
+document.getElementById('series-select-binder').value =
+e.target.value;
+document.getElementById('pack-container').innerHTML = '';
+});
+document.getElementById('series-select-binder')
+.addEventListener('change', (e) => {
+currentSeriesKey = e.target.value;
+document.getElementById('series-select-shop').value =
+e.target.value;
+renderBinderDex();
+});
+document.getElementById('overlay').addEventListener('click', () => {
+const portal = document.getElementById('zoom-portal');
+const overlay = document.getElementById('overlay');
+const wrapper = document.getElementById('portal-wrapper');
+isHolding = false;
+if (portal) portal.classList.remove('active');
+if (overlay) overlay.classList.remove('active');
+if (wrapper) {
+wrapper.style.transform = 'rotateX(0deg) rotateY(0deg)';
+const shine = wrapper.querySelector('.card-shine');
+if (shine) shine.style.opacity = '0';
+}
+document.body.classList.remove('modal-open');
+});
 document.getElementById('draw-btn').addEventListener('click', () => {
 const container = document.getElementById('pack-container');
 if (!container) return;
@@ -291,15 +416,16 @@ newPack.sort(() => Math.random() - 0.5);
 newPack.forEach(item => {
 const cardDiv = document.createElement('div');
 cardDiv.className = `card ${item.rarity}`;
-cardDiv.innerHTML = `<img src="img/${item.img || 'moc.png'}" alt="${item.name}" class="card-bg-image">  <div class="card-content-overlay">  <div style="font-size: 9px; opacity: 0.9; margin-bottom: 5px;">${item.label}</div>  <div style="font-weight: bold; line-height: 1.1; padding: 0 5px;">${item.name}</div>  </div>`;
+cardDiv.innerHTML = `<img src="img/${item.img || 'moc.png'}"  alt="${item.name}" class="card-bg-image">   <div class="card-content-overlay">   <div style="font-size: 9px; opacity: 0.9;  margin-bottom: 5px;">${item.label}</div>   <div style="font-weight: bold; line-height: 1.1;  padding: 0 5px;">${item.name}</div>   </div>`;
 container.appendChild(cardDiv);
 cardDiv.addEventListener('click', () => openCardInPortal(item));
 });
-renderInventory();
 });
 const savedSession = localStorage.getItem('gacha_active_session');
 if (savedSession) {
 loadUserData(savedSession);
+switchScreen('hub-screen');
+} else {
+switchScreen('auth-screen');
 }
-updateUI();
 });

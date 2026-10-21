@@ -2,56 +2,85 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <!-- Cette ligne est CRUCIALE pour le rendu mobile-first -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=no">
-    <title>Gacha Pack Opener & Inventaire 3D</title>
+    <title>Gacha Pack Opener & Classeur 3D</title>
     <link rel="stylesheet" href="style/style.css">
     
+    <!-- Chargement ordonné des scripts JavaScript -->
     <script src="js/series.js" defer></script>
     <script src="js/app.js" defer></script>
 </head>
 <body>
 
+    <!-- Calque d'assombrissement pour le focus des cartes -->
     <div id="overlay"></div>
 
+    <!-- Le conteneur du portail de zoom -->
     <div id="zoom-portal">
         <div class="portal-card-wrapper" id="portal-wrapper"></div>
     </div>
 
-    <h1>Gacha Pack Opener</h1>
-
     <!-- ÉCRAN 1 : FORMULAIRE DE COMPTE -->
     <div id="auth-screen" class="screen active">
         <div class="form-container">
-            <h2>Créer un compte</h2>
-            <p>Choisis un pseudo pour sauvegarder ton inventaire.</p>
+            <h2>Gacha Pack Opener</h2>
+            <p>Choisis un pseudo pour créer ou charger ton profil.</p>
             <div class="form-group">
                 <input type="text" id="username-input" placeholder="Ton pseudo..." maxlength="15">
-                <button id="login-btn">Jouer</button>
+                <button id="login-btn">Se connecter</button>
             </div>
         </div>
     </div>
 
-    <!-- ÉCRAN 2 : ZONE DE JEU -->
-    <div id="game-screen" class="screen">
-        <div class="profile-bar">
-            <span class="player-name">Joueur : <strong id="display-username"></strong></span>
-            
-            <div class="series-box">
-                <label for="series-select">Série :</label>
-                <select id="series-select"></select>
+    <!-- ÉCRAN 2 : HUB CENTRAL (PAGE D'ACCUEIL) -->
+    <div id="hub-screen" class="screen">
+        <div class="welcome-bar">
+            <h2>Bienvenue, <span id="hub-username" style="color: #ffcb05;"></span> !</h2>
+            <button id="hub-logout-btn" class="logout-btn-small">Déconnexion</button>
+        </div>
+        
+        <div class="hub-grid">
+            <div id="to-shop-btn" class="hub-tile tile-shop">
+                <div class="tile-icon">📦</div>
+                <h3>Boutique de Packs</h3>
+                <p>Ouvre des boosters aléatoires et tente de débloquer des cartes rares.</p>
             </div>
+            
+            <div id="to-binder-btn" class="hub-tile tile-binder">
+                <div class="tile-icon">📖</div>
+                <h3>Mon Classeur</h3>
+                <p>Consulte ta collection, suis ta progression et examine tes cartes en 3D.</p>
+            </div>
+        </div>
+    </div>
 
-            <button id="logout-btn" class="logout-btn">Quitter</button>
+    <!-- ÉCRAN 3 : ZONE DE BOUTIQUE (TIRAGE DE PACKS) -->
+    <div id="shop-screen" class="screen">
+        <div class="section-header">
+            <button class="back-to-hub-btn">⬅ Menu Principal</button>
+            <div class="series-box">
+                <label for="series-select-shop">Série :</label>
+                <select id="series-select-shop"></select>
+            </div>
         </div>
 
         <button id="draw-btn" class="main-draw-btn">Ouvrir un pack</button>
         
         <div id="pack-container"></div>
+    </div>
 
-        <!-- Section de l'inventaire persistant -->
+    <!-- ÉCRAN 4 : ZONE DE CLASSEUR (CARD DEX) -->
+    <div id="binder-screen" class="screen">
+        <div class="section-header">
+            <button class="back-to-hub-btn">⬅ Menu Principal</button>
+            <div class="series-box">
+                <label for="series-select-binder">Série :</label>
+                <select id="series-select-binder"></select>
+            </div>
+        </div>
+
         <div class="inventory-section">
-            <h3>Mon Inventaire</h3>
+            <h3>Collection de Cartes (<span id="completion-ratio">0/0</span>)</h3>
             <div id="inventory-grid" class="inventory-grid"></div>
         </div>
     </div>

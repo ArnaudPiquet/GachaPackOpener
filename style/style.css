@@ -19,14 +19,11 @@ body.modal-open {
     width: 100vw !important;
 }
 
-h1 {
-    color: #ffcb05;
-    text-shadow: 2px 2px #3c5aa6;
-    margin-bottom: 15px;
-    font-size: 1.8rem;
-    text-align: center;
+h1, h2, h3 {
+    margin: 0;
 }
 
+/* Écrans de l'application */
 .screen {
     display: none;
     flex-direction: column;
@@ -38,26 +35,29 @@ h1 {
     display: flex;
 }
 
+/* Écran d'authentification */
 .form-container {
     background: #2c3e50;
-    padding: 20px;
+    padding: 25px;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     text-align: center;
-    margin-top: 50px;
+    margin-top: 80px;
     width: 100%;
     max-width: 350px;
     box-sizing: border-box;
 }
 
 .form-container h2 {
-    margin-top: 0;
-    font-size: 1.4rem;
+    color: #ffcb05;
+    text-shadow: 1px 1px #3c5aa6;
+    margin-bottom: 10px;
 }
 
 .form-container p {
     font-size: 0.9rem;
     color: #bdc3c7;
+    margin-bottom: 5px;
 }
 
 .form-group {
@@ -78,6 +78,7 @@ input {
     text-align: center;
 }
 
+/* Boutons */
 button {
     padding: 12px 24px;
     font-size: 16px;
@@ -97,22 +98,97 @@ button:active {
     box-shadow: 0 0px #b38f00;
 }
 
-.profile-bar {
+/* --- STRUCTURE DU HUB CENTRAL (OPTION B) --- */
+.welcome-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 600px;
+    margin-top: 20px;
+    margin-bottom: 30px;
     background: #2c3e50;
     padding: 15px;
     border-radius: 12px;
-    margin-bottom: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.welcome-bar h2 {
+    font-size: 1.3rem;
+}
+
+.logout-btn-small {
+    background-color: #e74c3c;
+    color: white;
+    box-shadow: 0 4px #c0392b;
+    padding: 6px 12px;
+    font-size: 12px;
+}
+.logout-btn-small:active { box-shadow: 0 0px #c0392b; }
+
+.hub-grid {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 10px;
+    gap: 20px;
     width: 100%;
+    max-width: 600px;
+}
+
+.hub-tile {
+    background: #2c3e50;
+    border: 2px solid #34495e;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.hub-tile:hover {
+    transform: translateY(-2px);
+    border-color: #ffcb05;
+}
+
+.tile-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.hub-tile h3 {
+    color: #ffcb05;
+    font-size: 1.4rem;
+    margin-bottom: 8px;
+}
+
+.hub-tile p {
+    font-size: 0.9rem;
+    color: #bdc3c7;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Entêtes de section intérieures */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 20px;
+    background: #2c3e50;
+    padding: 10px 15px;
+    border-radius: 12px;
     box-sizing: border-box;
 }
 
-.player-name {
-    font-size: 1.1rem;
+.back-to-hub-btn {
+    background-color: #34495e;
+    color: #ffffff;
+    box-shadow: 0 4px #1a252f;
+    font-size: 14px;
+    padding: 8px 14px;
 }
+.back-to-hub-btn:active { box-shadow: 0 0px #1a252f; }
 
 .series-box {
     display: flex;
@@ -124,23 +200,13 @@ select {
     padding: 8px 12px;
     font-size: 14px;
     font-weight: bold;
-    background-color: #34495e;
+    background-color: #1a1a1a;
     color: #ffffff;
     border: 2px solid #ffcb05;
     border-radius: 8px;
     outline: none;
     cursor: pointer;
 }
-
-.logout-btn {
-    background-color: #e74c3c;
-    color: white;
-    box-shadow: 0 4px #c0392b;
-    padding: 8px 15px;
-    font-size: 14px;
-    width: 100%;
-}
-.logout-btn:active { box-shadow: 0 0px #c0392b; }
 
 .main-draw-btn {
     width: 100%;
@@ -153,20 +219,15 @@ select {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
     gap: 10px;
-    margin-top: 10px;
     width: 100%;
 }
 
-.inventory-grid {
-    margin-top: 15px;
-}
-
-/* Base de la carte (Grille booster et inventaire) */
+/* --- STRUCTURE DU CLASSEUR CARD DEX (OPTION 3) --- */
 .card {
     position: relative;
     width: 100%;
-    max-width: 110px; 
-    height: 145px;
+    max-width: 105px; 
+    height: 147px;    
     border-radius: 8px;
     display: flex;
     flex-direction: column;
@@ -182,6 +243,23 @@ select {
     box-sizing: border-box;
     cursor: pointer;
     margin: 0 auto; 
+    transition: filter 0.3s ease, opacity 0.3s ease;
+}
+
+
+/* FIX CARD DEX : Force l'obscurcissement total de la tuile, peu importe son dégradé CSS arrière */
+.card.locked {
+    filter: grayscale(1) brightness(0.08) !important; /* Force l'extinction complète du fond brillant */
+    opacity: 0.7;
+    cursor: not-allowed; /* Change le curseur pour indiquer que c'est verrouillé */
+}
+
+/* Cache le titre et les badges pour les silhouettes non possédées (Style épuré type Pokémon) */
+.card.locked .card-content-overlay {
+    opacity: 0 !important; 
+}
+.card.locked .badge {
+    display: none !important; /* Cache le compteur si on possède 0 exemplaire */
 }
 
 .commune { background: #7f8c8d; color: #fff; }
@@ -200,7 +278,6 @@ select {
 }
 
 .inventory-section {
-    margin-top: 30px;
     width: 100%;
     background: #2c3e50;
     padding: 15px;
@@ -211,9 +288,10 @@ select {
 
 .inventory-section h3 {
     margin-top: 0;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     border-bottom: 2px solid #34495e;
-    padding-bottom: 8px;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
 }
 
 .badge {
@@ -225,7 +303,7 @@ select {
     font-size: 11px;
 }
 
-/* --- INTERFACE MOTEUR ZOOM 3D --- */
+/* --- LOGIQUE PORTAL ZOOM 3D --- */
 #overlay {
     position: fixed;
     top: 0;
@@ -253,7 +331,7 @@ select {
     left: 50dvw;
     transform: translate(-50%, -50%);
     width: 240px;
-    height: 335px;
+    height: 336px;
     z-index: 9999; 
     pointer-events: none;
     display: none;
@@ -265,10 +343,9 @@ select {
     display: block;
 }
 
-/* CORRECTION STRUCTURELLE : On fusionne et libère les contraintes sur le wrapper maître */
 .portal-card-wrapper.card {
     width: 100% !important;
-    max-width: 100% !important; /* Annule la limite des 110px/135px */
+    max-width: 100% !important;
     height: 100% !important;
     cursor: grab;
     transform-style: preserve-3d;
@@ -286,20 +363,26 @@ select {
     padding: 15px;
     box-sizing: border-box;
     overflow: hidden;
+    filter: none !important; /* Force la carte zoomée à être en couleur même si non possédée */
+    opacity: 1 !important;
 }
 
 .portal-card-wrapper.card.grabbing {
     cursor: grabbing;
 }
 
-/* Image et overlays */
+.portal-card-wrapper div {
+    max-width: 100%;
+    word-break: break-word;
+}
+
 .card-bg-image {
     position: absolute;
-    top: 35px; 
+    top: 32px; 
     left: 50%;
     transform: translateX(-50%);
     width: 88%; 
-    height: 70px; 
+    height: 75px; 
     object-fit: cover; 
     border-radius: 4px; 
     border: 1px solid rgba(0, 0, 0, 0.4);
@@ -341,14 +424,28 @@ select {
     .form-group { flex-direction: row; }
     input { width: 200px; }
     
-    .profile-bar {
-        flex-direction: row;
-        justify-content: space-between;
-        padding: 10px 20px;
-        border-radius: 20px;
+    .welcome-bar {
+        max-width: 800px;
+        h2 { font-size: 1.6rem; }
     }
     
-    .logout-btn, .main-draw-btn { width: auto; }
+    .hub-grid {
+        flex-direction: row;
+        max-width: 800px;
+    }
+    
+    .hub-tile {
+        flex: 1;
+        padding: 35px 20px;
+    }
+    
+    .section-header {
+        max-width: 1000px;
+    }
+    
+    .inventory-section {
+        max-width: 1000px;
+    }
 
     #pack-container, .inventory-grid {
         grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -356,17 +453,16 @@ select {
     }
     
     .card {
-        height: 180px;
-        max-width: 135px; 
+        height: 182px;    
+        max-width: 130px; 
         font-size: 12px;
         padding: 10px;
         border-radius: 10px;
     }
     
-    /* Ajustements dimensionnels du zoom sur PC */
     #zoom-portal {
         width: 260px;
-        height: 365px;
+        height: 364px; 
     }
     
     .portal-card-wrapper.card {
@@ -376,7 +472,7 @@ select {
     
     .portal-card-wrapper.card .card-bg-image {
         top: 55px;
-        height: 180px; 
+        height: 185px; 
         border-radius: 8px;
     }
     
