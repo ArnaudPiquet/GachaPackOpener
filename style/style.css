@@ -1,0 +1,291 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #1a1a1a;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+    perspective: 1200px;
+}
+
+h1 {
+    color: #ffcb05;
+    text-shadow: 2px 2px #3c5aa6;
+    margin-bottom: 5px;
+}
+
+/* Écrans de l'application */
+.screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 1000px;
+}
+
+.screen.active {
+    display: flex;
+}
+
+.form-container {
+    background: #2c3e50;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    text-align: center;
+    margin-top: 50px;
+}
+
+input {
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: none;
+    margin-right: 10px;
+    width: 200px;
+    outline: none;
+}
+
+/* Boutons et éléments d'interface */
+button {
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+    background-color: #ffcb05;
+    color: #3c5aa6;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px #b38f00;
+    transition: all 0.1s ease;
+}
+
+button:active {
+    transform: translateY(4px);
+    box-shadow: 0 0px #b38f00;
+}
+
+.logout-btn {
+    background-color: #e74c3c;
+    color: white;
+    box-shadow: 0 4px #c0392b;
+    padding: 8px 15px;
+    font-size: 14px;
+    margin-left: 15px;
+}
+
+.logout-btn:active { 
+    box-shadow: 0 0px #c0392b; 
+}
+
+.profile-bar {
+    background: #2c3e50;
+    padding: 10px 20px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+}
+
+select {
+    padding: 6px 12px;
+    font-size: 14px;
+    font-weight: bold;
+    background-color: #34495e;
+    color: #ffffff;
+    border: 2px solid #ffcb05;
+    border-radius: 8px;
+    outline: none;
+    cursor: pointer;
+}
+
+#pack-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+    min-height: 220px;
+    width: 100%;
+}
+
+/* Composants Cartes standard */
+.card {
+    position: relative;
+    width: 130px;
+    height: 180px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    text-transform: uppercase;
+    font-size: 12px;
+    border: 2px solid transparent;
+    padding: 10px;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.commune { background: #7f8c8d; color: #fff; }
+.peu-commune { background: #27ae60; color: #fff; }
+.rare { background: #2980b9; color: #fff; border-color: #3498db; }
+.rare-holo { 
+    background: linear-gradient(135deg, #8e44ad, #d35400, #c0392b); 
+    color: #fff; 
+    border-color: #f1c40f;
+    animation: holo-gleam 3s infinite alternate;
+}
+
+@keyframes holo-gleam {
+    0% { filter: brightness(1); }
+    100% { filter: brightness(1.3) drop-shadow(0 0 8px #f1c40f); }
+}
+
+/* Composants Section Inventaire */
+.inventory-section {
+    margin-top: 40px;
+    width: 100%;
+    background: #2c3e50;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.inv-item {
+    background: #34495e;
+    padding: 10px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 5px solid transparent;
+}
+
+.inv-commune { border-left-color: #7f8c8d; }
+.inv-peu-commune { border-left-color: #27ae60; }
+.inv-rare { border-left-color: #2980b9; }
+.inv-rare-holo { border-left-color: #f1c40f; }
+
+.badge {
+    background: #ffcb05;
+    color: #3c5aa6;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+/* --- LOGIQUE PORTAL ET CONTROLE DE SOURIS 3D --- */
+#overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    z-index: 500;
+}
+
+#overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+    cursor: zoom-out;
+}
+
+#zoom-portal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 260px;
+    height: 365px;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+#zoom-portal.active {
+    display: block;
+}
+
+.portal-card-wrapper {
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+    transform-style: preserve-3d;
+    pointer-events: auto;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.portal-card-wrapper.grabbing {
+    cursor: grabbing;
+}
+
+/* --- AJUSTEMENTS RENDU PORTAL 3D CLEAN --- */
+#zoom-portal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 260px;
+    height: 365px;
+    z-index: 1000;
+    pointer-events: none;
+    display: none;
+}
+
+#zoom-portal.active {
+    display: block;
+}
+
+/* Le wrapper devient la carte maîtresse et fusionne ses propriétés */
+.portal-card-wrapper {
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+    transform-style: preserve-3d;
+    pointer-events: auto;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.85);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    
+    /* On force l'agrandissement des polices d'écriture pour le mode Zoom */
+    font-size: 18px !important; 
+    border-radius: 18px !important;
+}
+
+.portal-card-wrapper.grabbing {
+    cursor: grabbing;
+}
+
+.card-shine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+    mix-blend-mode: overlay;
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(1.5);
+    transition: opacity 0.3s ease;
+}
