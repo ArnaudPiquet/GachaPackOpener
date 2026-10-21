@@ -143,17 +143,21 @@ function openCardInPortal(item) {
 
     if (!portal || !wrapper || !overlay) return;
 
-    // Application stricte des classes
-    wrapper.className = `portal-card-wrapper card ${item.rarity}`;
+    // On applique l'identité graphique et la couleur de rareté sur le conteneur du portail
+    wrapper.className = `portal-card-wrapper ${item.rarity}`;
 
+    // Rendu des textes internes ajustés à la taille adaptative
     wrapper.innerHTML = `
-        <div style="font-size: 14px; opacity: 0.8; font-weight: bold; text-transform: uppercase; margin-bottom: 15px; pointer-events: none;">${item.label}</div>
-        <div style="font-size: 22px; font-weight: bold; padding: 0 15px; text-transform: uppercase; pointer-events: none;">${item.name}</div>
+        <div style="font-size: 0.85em; opacity: 0.8; font-weight: bold; text-transform: uppercase; margin-bottom: 15px;">${item.label}</div>
+        <div style="font-size: 1.35em; font-weight: bold; padding: 0 10px; text-transform: uppercase;">${item.name}</div>
         <div class="card-shine"></div>
     `;
 
     portal.classList.add('active');
     overlay.classList.add('active');
+
+    // FIX MOBILE CRUCIAL : Bloque radicalement le défilement et fige le viewport au niveau du body
+    document.body.classList.add('modal-open');
 }
 
 // Fonction globale pour relâcher le doigt ou la souris
@@ -190,6 +194,9 @@ document.getElementById('overlay').addEventListener('click', () => {
         const shine = wrapper.querySelector('.card-shine');
         if (shine) shine.style.opacity = '0';
     }
+
+    // FIX MOBILE CRUCIAL : Restaure le défilement normal de l'inventaire à la fermeture
+    document.body.classList.remove('modal-open');
 });
 
 // Calcul de mouvement unifié PointerMove
