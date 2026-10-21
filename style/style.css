@@ -63,24 +63,35 @@ h1, h2, h3 {
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
     margin-top: 15px;
+    width: 100%;
+    max-width: 260px; /* Verrouille la largeur du bloc sur PC et Mobile */
+    margin-left: auto;
+    margin-right: auto;
 }
-
+/* Force le champ et le bouton à adopter le même gabarit */
+.form-group input, 
+.form-group button {
+    width: 100%;
+    max-width: 260px; /* Aligné sur la taille du form-group */
+    height: 48px;     /* Hauteur fixe rigoureusement identique */
+    box-sizing: border-box; 
+}
 input {
-    padding: 12px;
+    padding: 0 20px; /* Plus besoin de padding vertical grâce au height fixe */
     font-size: 16px;
     border-radius: 8px;
     border: none;
-    width: 100%;
-    box-sizing: border-box;
     outline: none;
     text-align: center;
+    background-color: #ffffff;
+    color: #333333;
 }
 
 /* Boutons */
 button {
-    padding: 12px 24px;
+    padding: 0 20px; /* Aligné sur l'input */
     font-size: 16px;
     font-weight: bold;
     background-color: #ffcb05;
@@ -421,8 +432,7 @@ select {
 @media (min-width: 600px) {
     body { padding: 20px; }
     h1 { font-size: 2.5rem; }
-    .form-group { flex-direction: row; }
-    input { width: 200px; }
+
     
     .welcome-bar {
         max-width: 800px;
@@ -479,4 +489,34 @@ select {
     .portal-card-wrapper.card .card-content-overlay {
         padding: 15px 10px;
     }
+
+}
+/* --- COMPOSANT BANDEAU DE NOTIFICATION (TOAST) --- */
+.toast-bar {
+    position: fixed;
+    top: -60px; /* Caché par défaut au-dessus de l'écran */
+    left: 50%;
+    transform: translateX(-50%);
+    background: #e74c3c; /* Rouge par défaut pour les avertissements */
+    color: #ffffff;
+    padding: 12px 24px;
+    font-weight: bold;
+    font-size: 14px;
+    border-radius: 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    z-index: 10005; /* Passe par-dessus absolument tout */
+    transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Effet de rebond à l'apparition */
+    text-align: center;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* Classe activée par le JavaScript pour faire descendre le bandeau */
+.toast-bar.show {
+    top: 20px;
+}
+
+/* Modificateur vert si tu veux envoyer un message de succès (ex: pack ouvert) */
+.toast-bar.success {
+    background: #27ae60;
 }

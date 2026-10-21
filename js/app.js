@@ -250,10 +250,17 @@ function renderBinderDex() {
         // Active the strict fallback layout mask safety
         applyCardLockSafety(cardDiv, isOwned);
         
-        grid.appendChild(cardDiv);
-        cardDiv.addEventListener('click', () => 
-            openCardInPortal(gameCard)
-        );
+                grid.appendChild(cardDiv);
+        
+        // Sécurité : On ne permet le zoom 3D que si le joueur possède au moins 1 exemplaire
+        cardDiv.addEventListener('click', () => {
+            if (isOwned) {
+                openCardInPortal(gameCard);
+            } else {
+                showNotification("Cette carte est verrouillée. Ouvre des packs pour la débloquer !");
+                console.log('kk');
+         }
+        });
     });
 
     if (ratioLabel) {
@@ -428,4 +435,27 @@ switchScreen('hub-screen');
 } else {
 switchScreen('auth-screen');
 }
+
 });
+// MOTEUR DE NOTIFICATION INTEGRÉ
+function showNotification(message, type = "error") {
+    const toast = document.getElementById('toast-notification');
+    if (!toast) return;
+
+    toast.textContent = message;
+    
+    // On applique le style selon le type (rouge pour erreur, vert pour succès)
+    if (type === "success") {
+        toast.classList.add('success');
+    } else {
+        toast.classList.remove('success');
+    }
+
+    // Fait apparaître le bandeau
+    toast.classList.add('show');
+
+    // Le cache automatiquement après 3 secondes
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
