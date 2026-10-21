@@ -253,14 +253,20 @@ function renderBinderDex() {
                 grid.appendChild(cardDiv);
         
         // Sécurité : On ne permet le zoom 3D que si le joueur possède au moins 1 exemplaire
-        cardDiv.addEventListener('click', () => {
-            if (isOwned) {
-                openCardInPortal(gameCard);
-            } else {
-                showNotification("Cette carte est verrouillée. Ouvre des packs pour la débloquer !");
-                console.log('kk');
-         }
-        });
+   cardDiv.addEventListener('click', (e) => {
+    // On bloque immédiatement si la div de la carte contient la classe 'locked'
+    if (cardDiv.classList.contains('locked')) {
+        e.preventDefault();
+        e.stopPropagation();
+        showNotification("Cette carte est verrouillée. Ouvre des packs pour la débloquer !");
+        return; // On stoppe l'exécution ici, impossible d'ouvrir le portail
+    }
+    
+    // Si elle n'est pas lockée, on double-vérifie la possession avant d'ouvrir
+    if (isOwned) {
+        openCardInPortal(gameCard);
+    }
+});
     });
 
     if (ratioLabel) {
