@@ -149,7 +149,7 @@ select {
     margin-bottom: 20px;
 }
 
-#pack-container {
+#pack-container, .inventory-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
     gap: 10px;
@@ -157,9 +157,15 @@ select {
     width: 100%;
 }
 
+.inventory-grid {
+    margin-top: 15px;
+}
+
+/* Base de la carte (Grille booster et inventaire) */
 .card {
     position: relative;
     width: 100%;
+    max-width: 110px; 
     height: 145px;
     border-radius: 8px;
     display: flex;
@@ -175,6 +181,7 @@ select {
     padding: 5px;
     box-sizing: border-box;
     cursor: pointer;
+    margin: 0 auto; 
 }
 
 .commune { background: #7f8c8d; color: #fff; }
@@ -209,29 +216,6 @@ select {
     padding-bottom: 8px;
 }
 
-.inventory-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
-    gap: 10px;
-    margin-top: 15px;
-}
-
-.inv-item {
-    background: #34495e;
-    padding: 8px 12px;
-    border-radius: 6px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-left: 4px solid transparent;
-    font-size: 0.85rem;
-}
-
-.inv-commune { border-left-color: #7f8c8d; }
-.inv-peu-commune { border-left-color: #27ae60; }
-.inv-rare { border-left-color: #2980b9; }
-.inv-rare-holo { border-left-color: #f1c40f; }
-
 .badge {
     background: #ffcb05;
     color: #3c5aa6;
@@ -241,15 +225,15 @@ select {
     font-size: 11px;
 }
 
-/* --- STRUCTURE ET NETTOYAGE DU PORTAL ZOOM 3D --- */
+/* --- INTERFACE MOTEUR ZOOM 3D --- */
 #overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    width: 100% !important; /* Totalement ancré sans déborder */
-    height: 100% !important; /* Plus besoin du hack à 110% */
+    width: 100% !important;
+    height: 100% !important;
     background: rgba(0, 0, 0, 0.85);
     opacity: 0;
     pointer-events: none;
@@ -274,16 +258,18 @@ select {
     pointer-events: none;
     display: none;
     overflow: visible;
-    perspective: 1200px; /* Perspective localisée pour isoler les fixed du body */
+    perspective: 1200px; 
 }
 
 #zoom-portal.active {
     display: block;
 }
 
-.portal-card-wrapper {
-    width: 100%;
-    height: 100%;
+/* CORRECTION STRUCTURELLE : On fusionne et libère les contraintes sur le wrapper maître */
+.portal-card-wrapper.card {
+    width: 100% !important;
+    max-width: 100% !important; /* Annule la limite des 110px/135px */
+    height: 100% !important;
     cursor: grab;
     transform-style: preserve-3d;
     pointer-events: auto;
@@ -302,16 +288,11 @@ select {
     overflow: hidden;
 }
 
-.portal-card-wrapper.grabbing {
+.portal-card-wrapper.card.grabbing {
     cursor: grabbing;
 }
 
-.portal-card-wrapper div {
-    max-width: 100%;
-    word-break: break-word;
-}
-
-/* --- ILLUSTRATION CENTRÉE AVEC FOND DE RARETÉ VISIBLE --- */
+/* Image et overlays */
 .card-bg-image {
     position: absolute;
     top: 35px; 
@@ -355,68 +336,51 @@ select {
 
 /* --- ADAPTABILITÉ ORDINATEUR ET GRANDS ÉCRANS --- */
 @media (min-width: 600px) {
-    body {
-        padding: 20px;
-    }
-    h1 {
-        font-size: 2.5rem;
-    }
-    .screen {
-        max-width: 1000px;
-    }
-    .form-group {
-        flex-direction: row;
-    }
-    input {
-        width: 200px;
-    }
+    body { padding: 20px; }
+    h1 { font-size: 2.5rem; }
+    .form-group { flex-direction: row; }
+    input { width: 200px; }
+    
     .profile-bar {
         flex-direction: row;
         justify-content: space-between;
         padding: 10px 20px;
         border-radius: 20px;
     }
-    .logout-btn {
-        width: auto;
-    }
-    .main-draw-btn {
-        width: auto;
-    }
-    #pack-container {
-        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-        gap: 15px;
-    }
-    .card {
-        height: 180px;
-        font-size: 12px;
-        padding: 10px;
-        border-radius: 10px;
-    }
-    .inventory-grid {
+    
+    .logout-btn, .main-draw-btn { width: auto; }
+
+    #pack-container, .inventory-grid {
         grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
         gap: 15px;
     }
     
+    .card {
+        height: 180px;
+        max-width: 135px; 
+        font-size: 12px;
+        padding: 10px;
+        border-radius: 10px;
+    }
+    
+    /* Ajustements dimensionnels du zoom sur PC */
     #zoom-portal {
         width: 260px;
         height: 365px;
     }
     
-    .portal-card-wrapper {
+    .portal-card-wrapper.card {
         border-radius: 18px;
-        width: 100% !important;
-        height: 100% !important; 
-        font-size: 18px !important;
         padding: 20px;
     }
     
-    .portal-card-wrapper .card-bg-image {
+    .portal-card-wrapper.card .card-bg-image {
         top: 55px;
         height: 180px; 
         border-radius: 8px;
     }
     
-    .portal-card-wrapper .card-content-overlay {
+    .portal-card-wrapper.card .card-content-overlay {
         padding: 15px 10px;
     }
 }

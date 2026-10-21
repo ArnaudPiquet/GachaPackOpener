@@ -35,7 +35,6 @@ function loadUserData(username) {
     const savedData = localStorage.getItem(`gacha_user_${username}`);
     userInventory = savedData ? JSON.parse(savedData) : {};
     
-    // Rétablissement des labels manquants sur les anciens profils de test
     Object.keys(userInventory).forEach(name => {
         if (!userInventory[name].label) {
             let rarity = userInventory[name].rarity || "commune";
@@ -67,7 +66,7 @@ function updateUI() {
         document.getElementById('display-username').textContent = currentUser;
         renderInventory();
     } else {
-        authScreen.classList.add('active');
+        authScreen.add('active');
         gameScreen.classList.remove('active');
         document.getElementById('pack-container').innerHTML = '';
     }
@@ -109,7 +108,7 @@ function addToInventory(pack) {
             userInventory[item.name] = {
                 rarity: item.rarity,
                 name: item.name,
-                img: item.img, // Sauvegarde le nom de l'image liée
+                img: item.img, 
                 label: item.label, 
                 quantity: 1
             };
@@ -136,7 +135,6 @@ function renderInventory() {
         const cardDiv = document.createElement('div');
         cardDiv.className = `card ${item.rarity}`;
         
-        // FIX : Remplacement de "img/moc.png" par "img/\${item.img || 'moc.png'}" par sécurité
         cardDiv.innerHTML = `
             <img src="img/${item.img || 'moc.png'}" alt="${item.name}" class="card-bg-image">
             <div class="card-content-overlay">
@@ -152,7 +150,7 @@ function renderInventory() {
     });
 }
 
-// 4. MOTEUR INTERACTIF CARD 3D ISOLÉ (POINTER EVENTS UNIFIÉS)
+// 4. MOTEUR INTERACTIF CARD 3D ISOLÉ
 function setupPortalEvents() {
     const wrapper = document.getElementById('portal-wrapper');
     if (!wrapper) return;
@@ -202,10 +200,10 @@ function openCardInPortal(item) {
 
     if (!portal || !wrapper || !overlay) return;
 
+    // Réinitialisation des styles et injection propre des classes combinées
     wrapper.style.transform = 'rotateX(0deg) rotateY(0deg)';
     wrapper.className = `portal-card-wrapper card ${item.rarity}`;
 
-    // FIX : Utilise item.img de manière dynamique
     wrapper.innerHTML = `
         <img src="img/${item.img || 'moc.png'}" alt="${item.name}" class="card-bg-image">
         <div class="card-content-overlay">
@@ -283,28 +281,20 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         document.body.classList.remove('modal-open');
     });
-
-    document.getElementById('draw-btn').addEventListener('click', () => {
-        const container = document.getElementById('pack-container');
-        if (!container) return;
-        container.innerHTML = '';
-
-        const newPack = drawPack();
-        addToInventory(newPack);
+document.getElementById('draw-btn').addEventListener('click', () => {
+const container = document.getElementById('pack-container');
+if (!container) return;
+container.innerHTML = '';
+const newPack = drawPack();
+addToInventory(newPack);
 newPack.sort(() => Math.random() - 0.5);
 newPack.forEach(item => {
-        const cardDiv = document.createElement('div');
-        cardDiv.className = `card ${item.rarity}`;
-        cardDiv.innerHTML = `
-            <img src="img/${item.img || 'moc.png'}" alt="${item.name}" class="card-bg-image"> 
-            <div class="card-content-overlay"> 
-                <div style="font-size: 9px; opacity: 0.9; margin-bottom: 5px;">${item.label}</div> 
-                <div style="font-weight: bold; line-height: 1.1; padding: 0 5px;">${item.name}</div> 
-            </div>
-        `;
-        container.appendChild(cardDiv);
-        cardDiv.addEventListener('click', () => openCardInPortal(item));
-    });
+const cardDiv = document.createElement('div');
+cardDiv.className = `card ${item.rarity}`;
+cardDiv.innerHTML = `<img src="img/${item.img || 'moc.png'}" alt="${item.name}" class="card-bg-image">  <div class="card-content-overlay">  <div style="font-size: 9px; opacity: 0.9; margin-bottom: 5px;">${item.label}</div>  <div style="font-weight: bold; line-height: 1.1; padding: 0 5px;">${item.name}</div>  </div>`;
+container.appendChild(cardDiv);
+cardDiv.addEventListener('click', () => openCardInPortal(item));
+});
 renderInventory();
 });
 const savedSession = localStorage.getItem('gacha_active_session');
