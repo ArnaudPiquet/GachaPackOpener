@@ -2,21 +2,18 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Cette ligne est CRUCIALE pour le rendu mobile-first -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=no">
     <title>Gacha Pack Opener & Inventaire 3D</title>
-    <!-- Feuille de style externe déplacée dans /style/ -->
     <link rel="stylesheet" href="style/style.css">
     
-    <!-- Scripts JavaScript déplacés dans /js/ -->
     <script src="js/series.js" defer></script>
     <script src="js/app.js" defer></script>
 </head>
 <body>
 
-    <!-- Calque d'assombrissement pour le focus des cartes -->
     <div id="overlay"></div>
 
-    <!-- Conteneur isolé du portail de zoom 3D -->
     <div id="zoom-portal">
         <div class="portal-card-wrapper" id="portal-wrapper"></div>
     </div>
@@ -26,25 +23,29 @@
     <!-- ÉCRAN 1 : FORMULAIRE DE COMPTE -->
     <div id="auth-screen" class="screen active">
         <div class="form-container">
-            <h2>Créer un compte pour jouer</h2>
+            <h2>Créer un compte</h2>
             <p>Choisis un pseudo pour sauvegarder ton inventaire.</p>
-            <input type="text" id="username-input" placeholder="Ton pseudo..." maxlength="15">
-            <button id="login-btn">Commencer</button>
+            <div class="form-group">
+                <input type="text" id="username-input" placeholder="Ton pseudo..." maxlength="15">
+                <button id="login-btn">Jouer</button>
+            </div>
         </div>
     </div>
 
     <!-- ÉCRAN 2 : ZONE DE JEU -->
     <div id="game-screen" class="screen">
         <div class="profile-bar">
-            <span>Joueur : <strong id="display-username" style="color: #ffcb05;"></strong></span>
+            <span class="player-name">Joueur : <strong id="display-username"></strong></span>
             
-            <label for="series-select" style="margin-left: 20px; margin-right: 5px;">Série :</label>
-            <select id="series-select"></select>
+            <div class="series-box">
+                <label for="series-select">Série :</label>
+                <select id="series-select"></select>
+            </div>
 
-            <button id="logout-btn" class="logout-btn">Changer de compte</button>
+            <button id="logout-btn" class="logout-btn">Quitter</button>
         </div>
 
-        <button id="draw-btn">Ouvrir un pack</button>
+        <button id="draw-btn" class="main-draw-btn">Ouvrir un pack</button>
         
         <div id="pack-container"></div>
 
