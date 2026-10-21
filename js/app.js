@@ -1,20 +1,19 @@
 /**
- * GACHA PACK OPENER - LOGIQUE APPLICATIVE
+ * GACHA PACK OPENER - LOGIQUE APPLICATIVE MODERNE
  */
 
 let currentSeriesKey = ""; 
 let currentUser = null;
 let userInventory = {};
-let isHolding = false; // État d'activation du maintien du clic gauche
+let isHolding = false; 
 
-// 1. GESTION DES DONNÉES SÉRIES (PROVENANT DE SERIES.JS)
 function initializeSeriesMenu() {
     const select = document.getElementById('series-select');
     if (!select) return;
     select.innerHTML = "";
     
     if (typeof cardData === 'undefined') {
-        alert("Erreur : Le fichier series.js est manquant ou altéré dans le dossier /js/.");
+        alert("Erreur : Le fichier series.js est manquant.");
         return;
     }
 
@@ -26,10 +25,9 @@ function initializeSeriesMenu() {
         select.appendChild(option);
     });
 
-    currentSeriesKey = keys[0]; // Affectation textuelle stricte de la première série active
+    currentSeriesKey = keys[0];
 }
 
-// 2. STOCKAGE DE SESSIONS (LOCALSTORAGE EN BDD NAVIGATEUR)
 function loadUserData(username) {
     currentUser = username;
     const savedData = localStorage.getItem(`gacha_user_${username}`);
@@ -60,7 +58,6 @@ function updateUI() {
     }
 }
 
-// 3. MOTEUR ALÉATOIRE PONDÉRÉ (ALGORITHME DU DROPRATE)
 function getRandomItem(rarityList) {
     return rarityList[Math.floor(Math.random() * rarityList.length)];
 }
@@ -69,15 +66,12 @@ function drawPack() {
     const series = cardData[currentSeriesKey];
     const pack = [];
     
-    // Génération du nombre exact de Communes configurées
     for (let i = 0; i < series.rates.commune_count; i++) {
         pack.push({ name: getRandomItem(series.pool.commune), rarity: "commune", label: "Commune" });
     }
-    // Génération du nombre exact de Peu Communes configurées
     for (let i = 0; i < series.rates.peu_commune_count; i++) {
         pack.push({ name: getRandomItem(series.pool.peuCommune), rarity: "peu-commune", label: "Peu Commune" });
     }
-    // Slot garanti : Calcul de bascule entre Rare (66.7%) et Rare Holo (33.3%)
     if (Math.random() * 100 <= series.rates.rare_holo_chance) {
         pack.push({ name: getRandomItem(series.pool.rareHolo), rarity: "rare-holo", label: "Rare Holo ✨" });
     } else {
@@ -108,11 +102,10 @@ function renderInventory() {
 
     const items = Object.values(userInventory);
     if (items.length === 0) {
-        grid.innerHTML = '<p style="grid-column: 1/-1; opacity: 0.5;">Ton inventaire est vide. Ouvre ton premier pack !</p>';
+        grid.innerHTML = '<p style="grid-column: 1/-1; opacity: 0.5;">Ton inventaire est vide.</p>';
         return;
     }
 
-    // Tri de l'affichage par ordre hiérarchique de rareté décroissante
     const rarityOrder = { 'rare-holo': 0, 'rare': 1, 'peu-commune': 2, 'commune': 3 };
     items.sort((a, b) => rarityOrder[a.rarity] - rarityOrder[b.rarity]);
 
@@ -127,25 +120,20 @@ function renderInventory() {
     });
 }
 
-// 4. COUCHE PHYSIQUE ET RENDU INTERACTIF CARD 3D (ISOLATION PAR COMPOSANT PORTAL)
-// --- MOTEUR INTERACTIF CARD 3D ISOLÉ (COMPATIBLE DESKTOP & MOBILE) ---
+// --- PORTAL UNIFIÉ APIS MODÈLE MOBILE SÉCURISÉ ---
 function setupPortalEvents() {
     const wrapper = document.getElementById('portal-wrapper');
     if (!wrapper) return;
 
-    // Détection du grip (Souris)
-    wrapper.addEventListener('mousedown', (e) => {
+    // FIX FIX FIX : Utilisation exclusive de pointerdown (Fonctionne instantanément au doigt ET à la souris)
+    wrapper.addEventListener('pointerdown', (e) => {
         isHolding = true;
         wrapper.classList.add('grabbing');
         wrapper.style.transition = 'none';
+        
+        // Sécurise la capture du mouvement pour que le téléphone ne perde pas le fil
+        wrapper.setPointerCapture(e.pointerId); 
     });
-
-    // Détection du grip (Tactile Smartphone)
-    wrapper.addEventListener('touchstart', (e) => {
-        isHolding = true;
-        wrapper.classList.add('grabbing');
-        wrapper.style.transition = 'none';
-    }, { passive: true });
 }
 
 function openCardInPortal(item) {
@@ -155,6 +143,7 @@ function openCardInPortal(item) {
 
     if (!portal || !wrapper || !overlay) return;
 
+    // Application stricte des classes
     wrapper.className = `portal-card-wrapper card ${item.rarity}`;
 
     wrapper.innerHTML = `
@@ -167,7 +156,7 @@ function openCardInPortal(item) {
     overlay.classList.add('active');
 }
 
-// Relâcher le clic ou le doigt (Global)
+// Fonction globale pour relâcher le doigt ou la souris
 function handleRelease() {
     if (!isHolding) return;
     isHolding = false;
@@ -184,10 +173,9 @@ function handleRelease() {
     if (shine) shine.style.opacity = '0';
 }
 
-window.addEventListener('mouseup', handleRelease);
-window.addEventListener('touchend', handleRelease);
+window.addEventListener('pointerup', handleRelease);
 
-// Fermer le zoom au clic/toucher à côté sur le fond noir
+// Fermeture de l'overlay sombre au clic
 document.getElementById('overlay').addEventListener('click', () => {
     const portal = document.getElementById('zoom-portal');
     const overlay = document.getElementById('overlay');
@@ -204,8 +192,8 @@ document.getElementById('overlay').addEventListener('click', () => {
     }
 });
 
-// Fonction unifiée pour calculer les mouvements (Souris et Doigt)
-function handleMoveEffect(e) {
+// Calcul de mouvement unifié PointerMove
+window.addEventListener('pointermove', (e) => {
     if (!isHolding) return;
 
     const wrapper = document.getElementById('portal-wrapper');
@@ -213,12 +201,9 @@ function handleMoveEffect(e) {
 
     const rect = wrapper.getBoundingClientRect();
     
-    // FIX : Récupère les coordonnées soit de la souris, soit du premier doigt qui touche l'écran
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+    // Les coordonnées captent nativement la position absolue du doigt ou du curseur
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
 
     let px = (x / rect.width) - 0.5;
     let py = (y / rect.height) - 0.5;
@@ -238,12 +223,9 @@ function handleMoveEffect(e) {
         shine.style.opacity = '1';
         shine.style.transform = `translate(${(px * 20)}%, ${(py * 20)}%) scale(1.5)`;
     }
-}
+});
 
-window.addEventListener('mousemove', handleMoveEffect);
-window.addEventListener('touchmove', handleMoveEffect, { passive: true });
-
-// --- CHARGEMENT DU PROGRAMME ---
+// 5. ATTACHEMENT DES ÉVÉNEMENTS ÉCRANS AU CHARGEMENT DE LA PAGE
 window.addEventListener('DOMContentLoaded', () => {
     initializeSeriesMenu();
     setupPortalEvents();

@@ -191,7 +191,7 @@ select {
     font-size: 12px;
 }
 
-/* --- LOGIQUE PORTAL ET CONTROLE DE SOURIS 3D --- */
+/* --- INTEGRATION MOBILE ET EFFET PERSPECTIVE 3D --- */
 #overlay {
     position: fixed;
     top: 0;
@@ -220,35 +220,6 @@ select {
     height: 365px;
     z-index: 1000;
     pointer-events: none;
-}
-
-#zoom-portal.active {
-    display: block;
-}
-
-.portal-card-wrapper {
-    width: 100%;
-    height: 100%;
-    cursor: grab;
-    transform-style: preserve-3d;
-    pointer-events: auto;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.portal-card-wrapper.grabbing {
-    cursor: grabbing;
-}
-
-/* --- AJUSTEMENTS RENDU PORTAL 3D CLEAN --- */
-#zoom-portal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 260px;
-    height: 365px;
-    z-index: 1000;
-    pointer-events: none;
     display: none;
 }
 
@@ -256,7 +227,6 @@ select {
     display: block;
 }
 
-/* Le wrapper devient la carte maîtresse et fusionne ses propriétés */
 .portal-card-wrapper {
     width: 100%;
     height: 100%;
@@ -266,10 +236,13 @@ select {
     box-shadow: 0 30px 60px rgba(0,0,0,0.85);
     overflow: hidden;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-    
-    /* On force l'agrandissement des polices d'écriture pour le mode Zoom */
     font-size: 18px !important; 
     border-radius: 18px !important;
+    
+    /* FIX MOBILE : Bloque de force les comportements de défilement natifs sur la carte */
+    touch-action: none !important; 
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .portal-card-wrapper.grabbing {
@@ -288,11 +261,4 @@ select {
     opacity: 0;
     transform: scale(1.5);
     transition: opacity 0.3s ease;
-}
-
-/* Empêche les comportements mobiles parasites sur la carte zoomée */
-.portal-card-wrapper {
-    touch-action: none; /* Bloque le défilement natif du téléphone uniquement sur la carte */
-    -webkit-user-select: none; /* Empêche la sélection de texte sur iPhone */
-    user-select: none; /* Empêche la sélection de texte */
 }
