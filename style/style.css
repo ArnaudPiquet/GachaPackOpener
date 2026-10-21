@@ -289,3 +289,10 @@ select {
     transform: scale(1.5);
     transition: opacity 0.3s ease;
 }
+
+/* Empêche les comportements mobiles parasites sur la carte zoomée */
+.portal-card-wrapper {
+    touch-action: none; /* Bloque le défilement natif du téléphone uniquement sur la carte */
+    -webkit-user-select: none; /* Empêche la sélection de texte sur iPhone */
+    user-select: none; /* Empêche la sélection de texte */
+}

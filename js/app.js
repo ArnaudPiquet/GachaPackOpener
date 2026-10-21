@@ -128,16 +128,24 @@ function renderInventory() {
 }
 
 // 4. COUCHE PHYSIQUE ET RENDU INTERACTIF CARD 3D (ISOLATION PAR COMPOSANT PORTAL)
+// --- MOTEUR INTERACTIF CARD 3D ISOLÉ (COMPATIBLE DESKTOP & MOBILE) ---
 function setupPortalEvents() {
     const wrapper = document.getElementById('portal-wrapper');
     if (!wrapper) return;
 
-    // Détection du grip de saisie utilisateur
-    wrapper.addEventListener('mousedown', () => {
+    // Détection du grip (Souris)
+    wrapper.addEventListener('mousedown', (e) => {
         isHolding = true;
         wrapper.classList.add('grabbing');
-        wrapper.style.transition = 'none'; // Désactive le lissage CSS pour un contrôle mathématique instantané
+        wrapper.style.transition = 'none';
     });
+
+    // Détection du grip (Tactile Smartphone)
+    wrapper.addEventListener('touchstart', (e) => {
+        isHolding = true;
+        wrapper.classList.add('grabbing');
+        wrapper.style.transition = 'none';
+    }, { passive: true });
 }
 
 function openCardInPortal(item) {
@@ -147,23 +155,20 @@ function openCardInPortal(item) {
 
     if (!portal || !wrapper || !overlay) return;
 
-    // 1. On applique directement l'identité de la carte (.card) et sa rareté sur le conteneur principal
     wrapper.className = `portal-card-wrapper card ${item.rarity}`;
 
-    // 2. On injecte proprement le texte et le calque de reflet sans balise conteneur parasite
     wrapper.innerHTML = `
         <div style="font-size: 14px; opacity: 0.8; font-weight: bold; text-transform: uppercase; margin-bottom: 15px; pointer-events: none;">${item.label}</div>
         <div style="font-size: 22px; font-weight: bold; padding: 0 15px; text-transform: uppercase; pointer-events: none;">${item.name}</div>
         <div class="card-shine"></div>
     `;
 
-    // 3. Activation de l'affichage
     portal.classList.add('active');
     overlay.classList.add('active');
 }
 
-// Événement de relâchement global du clic (Souris en dehors ou en dedans de la zone)
-window.addEventListener('mouseup', () => {
+// Relâcher le clic ou le doigt (Global)
+function handleRelease() {
     if (!isHolding) return;
     isHolding = false;
     
@@ -177,9 +182,12 @@ window.addEventListener('mouseup', () => {
     
     const shine = wrapper.querySelector('.card-shine');
     if (shine) shine.style.opacity = '0';
-});
+}
 
-// Événement de fermeture au clic sur l'arrière-plan d'overlay sombre
+window.addEventListener('mouseup', handleRelease);
+window.addEventListener('touchend', handleRelease);
+
+// Fermer le zoom au clic/toucher à côté sur le fond noir
 document.getElementById('overlay').addEventListener('click', () => {
     const portal = document.getElementById('zoom-portal');
     const overlay = document.getElementById('overlay');
@@ -196,41 +204,46 @@ document.getElementById('overlay').addEventListener('click', () => {
     }
 });
 
-// Calcul de l'inclinaison perspective en fonction de la souris (Grip Mode)
-window.addEventListener('mousemove', (e) => {
+// Fonction unifiée pour calculer les mouvements (Souris et Doigt)
+function handleMoveEffect(e) {
     if (!isHolding) return;
 
     const wrapper = document.getElementById('portal-wrapper');
     if (!wrapper) return;
 
     const rect = wrapper.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    
+    // FIX : Récupère les coordonnées soit de la souris, soit du premier doigt qui touche l'écran
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-    // Normalisation des coordonnées centrées
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
     let px = (x / rect.width) - 0.5;
     let py = (y / rect.height) - 0.5;
 
-    // Butée mécanique angulaire de sécurité (Clamp anti-retournement)
     px = Math.max(-0.7, Math.min(0.7, px));
     py = Math.max(-0.7, Math.min(0.7, py));
 
-    const maxRotation = 35; // Angle limite de rotation (degrés)
+    const maxRotation = 35; 
     const rotateX = -py * maxRotation;
     const rotateY = px * maxRotation;
 
     wrapper.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
     wrapper.style.boxShadow = `${-px * 45}px ${-py * 45}px 55px rgba(0,0,0,0.8)`;
 
-    // Émulation d'optique sur la plaque réflective holographique interne
     const shine = wrapper.querySelector('.card-shine');
     if (shine) {
         shine.style.opacity = '1';
         shine.style.transform = `translate(${(px * 20)}%, ${(py * 20)}%) scale(1.5)`;
     }
-});
+}
 
-// 5. INITIALISATION DES ÉCOUTEURS D'ÉVÉNEMENTS GÉNÉRAUX AU CHARGEMENT DE LA PAGE
+window.addEventListener('mousemove', handleMoveEffect);
+window.addEventListener('touchmove', handleMoveEffect, { passive: true });
+
+// --- CHARGEMENT DU PROGRAMME ---
 window.addEventListener('DOMContentLoaded', () => {
     initializeSeriesMenu();
     setupPortalEvents();
@@ -276,16 +289,15 @@ window.addEventListener('DOMContentLoaded', () => {
             `;
             container.appendChild(cardDiv);
             
-            // Événement d'interception pour ouvrir la carte dans le portail isolé
             cardDiv.addEventListener('click', () => openCardInPortal(item));
         });
 
         renderInventory();
     });
-// Session automatique persistante au rechargement
-const savedSession = localStorage.getItem('gacha_active_session');
-if (savedSession) {
-loadUserData(savedSession);
-}
-updateUI();
+
+    const savedSession = localStorage.getItem('gacha_active_session');
+    if (savedSession) {
+        loadUserData(savedSession);
+    }
+    updateUI();
 });
