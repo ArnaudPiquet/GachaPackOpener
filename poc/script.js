@@ -84,8 +84,8 @@ function setupInteractiveEvents(wrapper) {
     const overlay = document.getElementById('overlay');
     const statusText = document.getElementById('status-text');
 
-    // MÈCANISME 1 : Gestion du Clic/Tap initial d'agrandissement spatial et de flip
-    wrapper.addEventListener('click', (e) => {
+    // MÉCANISME 1 : Gestion du Clic/Tap initial d'agrandissement spatial, flip et demande de permission Gyro
+    wrapper.addEventListener('click', async (e) => {
         if (isZoomed) return; // Interdit le re-déclenchement si la carte est au premier plan
         e.stopPropagation(); 
         
@@ -101,6 +101,25 @@ function setupInteractiveEvents(wrapper) {
         if (statusText) {
             statusText.textContent = "PC : Maintiens le clic pour inspecter. Mobile : Glisse ton doigt ou incline le téléphone.";
         }
+
+        // --- CORRECTIF DE SÉCURITÉ POUR IPHONE (iOS 13+) ---
+        // Vérifie si le navigateur nécessite une demande explicite d'accès aux capteurs
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            try {
+                // Déclenche l'invite système d'iOS (Autorisé car nous sommes au sein d'un événement 'click')
+                const permissionState = await DeviceOrientationEvent.requestPermission();
+                
+                if (permissionState === 'granted') {
+                    console.log("Accès au gyroscope validé par l'utilisateur iOS.");
+                } else {
+                    console.warn("Accès au gyroscope refusé par l'utilisateur iOS.");
+                    if (statusText) statusText.textContent = "PC : Maintiens le clic. Mobile : Glisse ton doigt (Gyroscope désactivé).";
+                }
+            } catch (error) {
+                console.error("Erreur lors de la demande de permission DeviceOrientation :", error);
+            }
+        }
+        // ----------------------------------------------------
     });
 
     // MÈCANISME 2 : Fermeture du mode focus (Conserve la face visible sur le plateau)
