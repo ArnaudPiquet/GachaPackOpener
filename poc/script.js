@@ -55,7 +55,7 @@ function generatePocCard() {
   const wrapper = document.createElement('div');
   wrapper.className = 'card-perspective-wrapper';
 
-  // AJOUT : Insertion du calque d'arrière-plan autonome .card-glow
+  // Calque .card-glow autonome placé en arrière-plan immédiat
   wrapper.innerHTML = `
         <div class="card-glow ${cardInfo.rarity}"></div>
         <div class="card">
@@ -96,10 +96,9 @@ function setupInteractiveEvents(wrapper) {
       isFlipped = true;
       wrapper.classList.add('flipped');
 
-      // Attente du timing de fin de transition (600ms) pour déclencher l'impact lumineux et haptique
+      // Attente du timing de fin de transition (600ms) pour déclencher l'impact haptique et lumineux
       setTimeout(() => {
         if (navigator.vibrate) navigator.vibrate(15); // Vibration matérielle Android
-
         wrapper.classList.add('holo-flash');
 
         setTimeout(() => {
@@ -126,7 +125,7 @@ function setupInteractiveEvents(wrapper) {
       }
     }
 
-    // MISE EN CACHE DE SÉCURITÉ : Calcule les dimensions après amortissement complet (Flip + Secousse)
+    // MISE EN CACHE DE SÉCURITÉ : Calcule les dimensions après amortissement complet (Flip + Flash)
     setTimeout(() => {
       if (isZoomed) cachedRect = card.getBoundingClientRect();
     }, 800);
@@ -146,9 +145,9 @@ function setupInteractiveEvents(wrapper) {
     isZoomed = false;
     isHolding = false;
     isCalibrated = false;
-    cachedRect = null; // Purge du cache matériel
+    cachedRect = null; // Purge complète du cache matériel
 
-    // DÉSACTIVATION DES ÉCOUTEURS VOLATILS : Libère la charge CPU
+    // DÉSACTIVATION DES ÉCOUTEURS VOLATILS : Libère immédiatement la charge CPU
     deactivateMovableListeners();
 
     wrapper.classList.remove('zoomed', 'grabbing');
@@ -173,6 +172,7 @@ function setupInteractiveEvents(wrapper) {
     cachedRect = card.getBoundingClientRect();
   }
 
+  // Correction : Déclaration explicite de la variable locale de fonction
   const onMouseUp = function () {
     if (isHolding) {
       isHolding = false;
@@ -198,8 +198,6 @@ function setupInteractiveEvents(wrapper) {
     }
   }
 
-  document.addEventListener('mouseup', onMouseUp);
-
   function resetCardPosition() {
     card.style.transition = 'transform 0.3s ease, box-shadow 0.3s ease';
     card.style.transform = 'rotateX(0deg) rotateY(0deg)';
@@ -207,8 +205,9 @@ function setupInteractiveEvents(wrapper) {
     if (shine) shine.style.opacity = '0';
   }
 
-  // Connexion des déclencheurs
+  // Connexion propre des déclencheurs
   wrapper.addEventListener('mousedown', onMouseDown);
+  window.addEventListener('mouseup', onMouseUp);
   wrapper.addEventListener('touchstart', onTouchStart, { passive: true });
   window.addEventListener('touchend', onTouchEnd);
 
@@ -238,6 +237,7 @@ function setupInteractiveEvents(wrapper) {
 
     const rect = cachedRect || card.getBoundingClientRect();
 
+    // Correction : Extraction robuste du premier point de contact tactile pour mobile
     const clientX = isTouch ? e.touches[0].clientX : e.clientX;
     const clientY = isTouch ? e.touches[0].clientY : e.clientY;
 
@@ -288,11 +288,9 @@ function setupInteractiveEvents(wrapper) {
     card.style.transition = 'none';
     apply3DEffect(px, py);
   }
-
   // ==========================================================================
   // MÉCANISME 4 : INTÉGRATEUR CYCLIQUES (ALLOCATION DYNAMIQUE D'ÉCOUTEURS)
   // ==========================================================================
-
   function activateMovableListeners() {
     window.addEventListener('mousemove', handleMove);
     window.addEventListener('touchmove', handleMove, { passive: false });
