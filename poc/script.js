@@ -80,31 +80,8 @@ function setupInteractiveEvents(wrapper) {
   const overlay = document.getElementById('overlay');
   const statusText = document.getElementById('status-text');
 
-  // ==========================================================================
-  // MÉCANISME 1 : GESTION DES PERMISSIONS ET DE L'ANIMATION (SÉQUENCE POST-CONSENTEMENT)
-  // ==========================================================================
-
-  wrapper.addEventListener('click', async (e) => {
-    if (isZoomed) return;
-    e.stopPropagation();
-
-    // ÉTAPE 1 : Demande de privilèges matériels Apple (iOS 13+) AVANT toute action visuelle
-    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-      try {
-        // Le script se met en pause ici : la carte ne bouge pas, la pop-up système apparaît.
-        const permissionState = await DeviceOrientationEvent.requestPermission();
-        isGyroAllowed = (permissionState === 'granted');
-
-        if (!isGyroAllowed && statusText) {
-          statusText.textContent = "PC : Maintiens le clic. Mobile : Glisse ton doigt (Gyroscope désactivé).";
-        }
-      } catch (error) {
-        console.error("Erreur d'initialisation des capteurs iOS :", error);
-        isGyroAllowed = false;
-      }
-    }
-
-    // ÉTAPE 2 : Une fois la pop-up gérée (ou immédiatement sur PC/Android), on lance TOUTE l'animation !
+  // Fonction interne qui déclenche et orchestre la séquence complète d'animation
+  function triggerRevealSequence() {
     isZoomed = true;
     wrapper.classList.add('zoomed');
     if (overlay) overlay.classList.add('active');
@@ -113,7 +90,7 @@ function setupInteractiveEvents(wrapper) {
       isFlipped = true;
       wrapper.classList.add('flipped');
 
-      // Attente de la fin du retournement CSS (600ms) pour l'impact lumineux et haptic
+      // Attente de la fin du retournement CSS (600ms) pour l'impact lumineux et haptique
       setTimeout(() => {
         if (navigator.vibrate) navigator.vibrate(15); // Android
         wrapper.classList.add('holo-flash'); // Éclair + Aura de rareté
@@ -124,17 +101,48 @@ function setupInteractiveEvents(wrapper) {
       }, 600);
     }
 
-    if (statusText && isGyroAllowed) {
-      statusText.textContent = "PC : Maintiens le clic pour inspecter. Mobile : Glisse ton doigt ou incline le téléphone.";
+    if (statusText) {
+      statusText.textContent = isGyroAllowed
+        ? "PC : Maintiens le clic pour inspecter. Mobile : Glisse ton doigt ou incline le téléphone."
+        : "PC : Maintiens le clic pour inspecter. Mobile : Glisse ton doigt (Gyroscope désactivé).";
     }
 
-    // ÉTAPE 3 : Calcul du cache géométrique une fois la carte stabilisée au centre
+    // Calcul du cache géométrique une fois la carte stabilisée au centre
     setTimeout(() => {
       if (isZoomed) cachedRect = card.getBoundingClientRect();
     }, 800);
 
-    // ÉTAPE 4 : Activation des écouteurs de mouvements 3D
+    // Activation des écouteurs de mouvements 3D
     activateMovableListeners();
+  }
+
+  // ==========================================================================
+  // MÉCANISME 1 : GESTION DES PERMISSIONS ET DE L'ANIMATION (IOS COMPATIBLE)
+  // ==========================================================================
+  wrapper.addEventListener('click', (e) => {
+    if (isZoomed) return;
+    e.stopPropagation();
+
+    // SÉCURITÉ SAFARI : Vérification strictement synchrone dès la racine du clic
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+
+      // L'appel est synchrone avec le clic : Safari accepte d'ouvrir la pop-up système immédiatement
+      DeviceOrientationEvent.requestPermission()
+        .then((permissionState) => {
+          isGyroAllowed = (permissionState === 'granted');
+          // La décision (Acceptée ou Refusée) est prise, on lance l'animation complète !
+          triggerRevealSequence();
+        })
+        .catch((error) => {
+          console.error("Erreur d'initialisation des capteurs iOS :", error);
+          isGyroAllowed = false;
+          triggerRevealSequence(); // Lancement de secours si l'API échoue
+        });
+
+    } else {
+      // Profil PC ou Android : Pas besoin de permission, on lance directement l'animation
+      triggerRevealSequence();
+    }
   });
 
   // ==========================================================================
@@ -267,7 +275,6 @@ function setupInteractiveEvents(wrapper) {
     const currentGamma = e.gamma;
 
     if (currentGamma === null || currentBeta === null) return;
-
     if (!isCalibrated) {
       baseAlpha = currentAlpha;
       baseBeta = currentBeta;
@@ -275,7 +282,6 @@ function setupInteractiveEvents(wrapper) {
       isCalibrated = true;
       return;
     }
-
     let deltaX = currentGamma - baseGamma;
     let deltaY = currentBeta - baseBeta;
     if (deltaX > 180) deltaX -= 360;
