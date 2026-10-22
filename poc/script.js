@@ -80,7 +80,7 @@ function setupInteractiveEvents(wrapper) {
   const overlay = document.getElementById('overlay');
   const statusText = document.getElementById('status-text');
 
-// ==========================================================================
+  // ==========================================================================
   // MÉCANISME 1 : GESTION DES PERMISSIONS ET DE L'ANIMATION (SÉQUENCE POST-CONSENTEMENT)
   // ==========================================================================
 
@@ -94,7 +94,7 @@ function setupInteractiveEvents(wrapper) {
         // Le script se met en pause ici : la carte ne bouge pas, la pop-up système apparaît.
         const permissionState = await DeviceOrientationEvent.requestPermission();
         isGyroAllowed = (permissionState === 'granted');
-        
+
         if (!isGyroAllowed && statusText) {
           statusText.textContent = "PC : Maintiens le clic. Mobile : Glisse ton doigt (Gyroscope désactivé).";
         }
@@ -138,7 +138,37 @@ function setupInteractiveEvents(wrapper) {
   });
 
   // ==========================================================================
-  // MÉCANISME 2 : GESTIONNAIRES DE CONTACT (INPUT TRACKING)
+  // MÉCANISME 2 : GESTION DE LA SORTIE DU FOCUS (DÉZOOM VIA CLIC SUR L'OVERLAY)
+  // ==========================================================================
+  if (overlay) {
+    overlay.addEventListener('click', (e) => {
+      e.stopPropagation();
+      unzoomCard();
+    });
+  }
+
+  function unzoomCard() {
+    isZoomed = false;
+    isHolding = false;
+    isCalibrated = false;
+    cachedRect = null; // Purge complète du cache matériel
+
+    // DÉSACTIVATION DES ÉCOUTEURS VOLATILS : Libère immédiatement la charge CPU
+    deactivateMovableListeners();
+
+    wrapper.classList.remove('zoomed', 'grabbing');
+    if (overlay) overlay.classList.remove('active');
+    if (statusText) statusText.textContent = "Clique/Tape sur la carte pour l'agrandir de nouveau.";
+
+    // Interpolation de retour aux coordonnées d'origine (0, 0)
+    card.style.transition = 'transform 0.4s ease, box-shadow 0.4s ease';
+    card.style.transform = 'rotateX(0deg) rotateY(0deg)';
+    card.style.boxShadow = '0 4px 8px rgba(0,0,0,0.5)';
+    if (shine) shine.style.opacity = '0';
+  }
+
+  // ==========================================================================
+  // MÉCANISME 3 : GESTIONNAIRES DE CONTACT (INPUT TRACKING)
   // ==========================================================================
 
   function onMouseDown(e) {
@@ -149,7 +179,6 @@ function setupInteractiveEvents(wrapper) {
     cachedRect = card.getBoundingClientRect();
   }
 
-  // Correction : Déclaration explicite de la variable locale de fonction
   const onMouseUp = function () {
     if (isHolding) {
       isHolding = false;
@@ -189,7 +218,7 @@ function setupInteractiveEvents(wrapper) {
   window.addEventListener('touchend', onTouchEnd);
 
   // ==========================================================================
-  // MÉCANISME 3 : ENGINS CALCULATEURS ET PARALLAXE MATHÉMATIQUE
+  // MÉCANISME 4 : ENGINS CALCULATEURS ET PARALLAXE MATHÉMATIQUE
   // ==========================================================================
 
   function apply3DEffect(px, py) {
@@ -214,7 +243,6 @@ function setupInteractiveEvents(wrapper) {
 
     const rect = cachedRect || card.getBoundingClientRect();
 
-    // Correction : Extraction robuste du premier point de contact tactile pour mobile
     const clientX = isTouch ? e.touches[0].clientX : e.clientX;
     const clientY = isTouch ? e.touches[0].clientY : e.clientY;
 
@@ -250,23 +278,19 @@ function setupInteractiveEvents(wrapper) {
 
     let deltaX = currentGamma - baseGamma;
     let deltaY = currentBeta - baseBeta;
-
     if (deltaX > 180) deltaX -= 360;
     if (deltaX < -180) deltaX += 360;
     if (deltaY > 180) deltaY -= 360;
     if (deltaY < -180) deltaY += 360;
-
     let px = deltaX / 25;
     let py = deltaY / 25;
-
     px = Math.max(-0.7, Math.min(0.7, px));
     py = Math.max(-0.7, Math.min(0.7, py));
-
     card.style.transition = 'none';
     apply3DEffect(px, py);
   }
   // ==========================================================================
-  // MÉCANISME 4 : INTÉGRATEUR CYCLIQUES (ALLOCATION DYNAMIQUE D'ÉCOUTEURS)
+  // MÉCANISME 5 : INTÉGRATEUR CYCLIQUES (ALLOCATION DYNAMIQUE D'ÉCOUTEURS)
   // ==========================================================================
   function activateMovableListeners() {
     window.addEventListener('mousemove', handleMove);
