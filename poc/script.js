@@ -55,7 +55,6 @@ function generatePocCard() {
   const wrapper = document.createElement('div');
   wrapper.className = 'card-perspective-wrapper';
 
-  // Calque .card-glow autonome placé en arrière-plan immédiat
   wrapper.innerHTML = `
         <div class="card-glow ${cardInfo.rarity}"></div>
         <div class="card">
@@ -103,8 +102,8 @@ function setupInteractiveEvents(wrapper) {
 
     if (statusText) {
       statusText.textContent = isGyroAllowed
-        ? "PC : Maintiens le clic pour inspecter. Mobile : Glisse ton doigt ou incline le téléphone."
-        : "PC : Maintiens le clic pour inspecter. Mobile : Glisse ton doigt (Gyroscope désactivé).";
+        ? "iOS : Gyroscope connecté ! Incline le téléphone ou glisse ton doigt."
+        : "PC : Maintiens le clic. Mobile : Glisse ton doigt (Gyroscope désactivé).";
     }
 
     // Calcul du cache géométrique une fois la carte stabilisée au centre
@@ -126,11 +125,11 @@ function setupInteractiveEvents(wrapper) {
     // SÉCURITÉ SAFARI : Vérification strictement synchrone dès la racine du clic
     if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
 
-      // L'appel est synchrone avec le clic : Safari accepte d'ouvrir la pop-up système immédiatement
+      // L'appel est synchrone avec le clic : Safari accepte la promesse immédiatement
       DeviceOrientationEvent.requestPermission()
         .then((permissionState) => {
           isGyroAllowed = (permissionState === 'granted');
-          // La décision (Acceptée ou Refusée) est prise, on lance l'animation complète !
+          // La décision (déjà enregistrée ou nouvelle) est lue, on lance la cinématique
           triggerRevealSequence();
         })
         .catch((error) => {
@@ -141,6 +140,7 @@ function setupInteractiveEvents(wrapper) {
 
     } else {
       // Profil PC ou Android : Pas besoin de permission, on lance directement l'animation
+      isGyroAllowed = false; // Pas d'API Apple ici
       triggerRevealSequence();
     }
   });
@@ -251,6 +251,7 @@ function setupInteractiveEvents(wrapper) {
 
     const rect = cachedRect || card.getBoundingClientRect();
 
+    // PROTECTION FIX WORKAROUND IOS : Ciblage strict de l'index 0 du tableau de points touchés
     const clientX = isTouch ? e.touches[0].clientX : e.clientX;
     const clientY = isTouch ? e.touches[0].clientY : e.clientY;
 
@@ -273,7 +274,6 @@ function setupInteractiveEvents(wrapper) {
     const currentAlpha = e.alpha;
     const currentBeta = e.beta;
     const currentGamma = e.gamma;
-
     if (currentGamma === null || currentBeta === null) return;
     if (!isCalibrated) {
       baseAlpha = currentAlpha;
