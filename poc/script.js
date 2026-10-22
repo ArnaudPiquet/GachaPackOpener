@@ -80,42 +80,21 @@ function setupInteractiveEvents(wrapper) {
   const overlay = document.getElementById('overlay');
   const statusText = document.getElementById('status-text');
 
-  // ==========================================================================
-  // MÉCANISME 1 : GESTION D'OUVERTURE ET PERMISSIONS D'INTERFACES
+// ==========================================================================
+  // MÉCANISME 1 : GESTION DES PERMISSIONS ET DE L'ANIMATION (SÉQUENCE POST-CONSENTEMENT)
   // ==========================================================================
 
   wrapper.addEventListener('click', async (e) => {
     if (isZoomed) return;
     e.stopPropagation();
 
-    isZoomed = true;
-    wrapper.classList.add('zoomed');
-    if (overlay) overlay.classList.add('active');
-
-    if (!isFlipped) {
-      isFlipped = true;
-      wrapper.classList.add('flipped');
-
-      // Attente du timing de fin de transition (600ms) pour déclencher l'impact haptique et lumineux
-      setTimeout(() => {
-        if (navigator.vibrate) navigator.vibrate(15); // Vibration matérielle Android
-        wrapper.classList.add('holo-flash');
-
-        setTimeout(() => {
-          wrapper.classList.remove('holo-flash');
-        }, 600);
-      }, 600);
-    }
-
-    if (statusText) {
-      statusText.textContent = "PC : Maintiens le clic pour inspecter. Mobile : Glisse ton doigt ou incline le téléphone.";
-    }
-
-    // Gestion asynchrone sécurisée de l'API d'orientation Apple (iOS 13+)
+    // ÉTAPE 1 : Demande de privilèges matériels Apple (iOS 13+) AVANT toute action visuelle
     if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
       try {
+        // Le script se met en pause ici : la carte ne bouge pas, la pop-up système apparaît.
         const permissionState = await DeviceOrientationEvent.requestPermission();
         isGyroAllowed = (permissionState === 'granted');
+        
         if (!isGyroAllowed && statusText) {
           statusText.textContent = "PC : Maintiens le clic. Mobile : Glisse ton doigt (Gyroscope désactivé).";
         }
@@ -125,40 +104,38 @@ function setupInteractiveEvents(wrapper) {
       }
     }
 
-    // MISE EN CACHE DE SÉCURITÉ : Calcule les dimensions après amortissement complet (Flip + Flash)
+    // ÉTAPE 2 : Une fois la pop-up gérée (ou immédiatement sur PC/Android), on lance TOUTE l'animation !
+    isZoomed = true;
+    wrapper.classList.add('zoomed');
+    if (overlay) overlay.classList.add('active');
+
+    if (!isFlipped) {
+      isFlipped = true;
+      wrapper.classList.add('flipped');
+
+      // Attente de la fin du retournement CSS (600ms) pour l'impact lumineux et haptic
+      setTimeout(() => {
+        if (navigator.vibrate) navigator.vibrate(15); // Android
+        wrapper.classList.add('holo-flash'); // Éclair + Aura de rareté
+
+        setTimeout(() => {
+          wrapper.classList.remove('holo-flash');
+        }, 600);
+      }, 600);
+    }
+
+    if (statusText && isGyroAllowed) {
+      statusText.textContent = "PC : Maintiens le clic pour inspecter. Mobile : Glisse ton doigt ou incline le téléphone.";
+    }
+
+    // ÉTAPE 3 : Calcul du cache géométrique une fois la carte stabilisée au centre
     setTimeout(() => {
       if (isZoomed) cachedRect = card.getBoundingClientRect();
     }, 800);
 
-    // ACTIVATION DES ÉCOUTEURS VOLATILS EN MODE ZOOM
+    // ÉTAPE 4 : Activation des écouteurs de mouvements 3D
     activateMovableListeners();
   });
-
-  if (overlay) {
-    overlay.addEventListener('click', (e) => {
-      e.stopPropagation();
-      unzoomCard();
-    });
-  }
-
-  function unzoomCard() {
-    isZoomed = false;
-    isHolding = false;
-    isCalibrated = false;
-    cachedRect = null; // Purge complète du cache matériel
-
-    // DÉSACTIVATION DES ÉCOUTEURS VOLATILS : Libère immédiatement la charge CPU
-    deactivateMovableListeners();
-
-    wrapper.classList.remove('zoomed', 'grabbing');
-    if (overlay) overlay.classList.remove('active');
-    if (statusText) statusText.textContent = "Clique/Tape sur la carte pour l'agrandir de nouveau.";
-
-    card.style.transition = 'transform 0.4s ease, box-shadow 0.4s ease';
-    card.style.transform = 'rotateX(0deg) rotateY(0deg)';
-    card.style.boxShadow = '0 4px 8px rgba(0,0,0,0.5)';
-    if (shine) shine.style.opacity = '0';
-  }
 
   // ==========================================================================
   // MÉCANISME 2 : GESTIONNAIRES DE CONTACT (INPUT TRACKING)
