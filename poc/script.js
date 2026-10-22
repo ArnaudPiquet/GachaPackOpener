@@ -3,6 +3,29 @@
  * Optimisé pour un rendu constant à 60 FPS (Zéro Layout Thrashing & Écouteurs Volatils)
  */
 
+
+// --- POLYFILL DE VIBRATION POUR IOS ---
+// Crée un pont technique en interceptant l'API "navigator.vibrate" pour Safari
+if (!("vibrate" in navigator)) {
+    navigator.vibrate = function(pattern) {
+        // Crée un élément natif éphémère qu'iOS force à vibrer
+        const dummyCheckbox = document.createElement('input');
+        dummyCheckbox.type = 'checkbox';
+        dummyCheckbox.style.position = 'fixed';
+        dummyCheckbox.style.opacity = '0';
+        dummyCheckbox.style.pointerEvents = 'none';
+        
+        document.body.appendChild(dummyCheckbox);
+        
+        // Simule un changement d'état ultra-rapide pour déclencher le Taptic Engine d'Apple
+        dummyCheckbox.click();
+        
+        setTimeout(() => {
+            dummyCheckbox.remove();
+        }, 50);
+        return true;
+    };
+}
 const cardData = {
   "series1": {
     "name": "Série 1 : Origines",
