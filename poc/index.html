@@ -1,0 +1,21 @@
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <!-- Configuration mobile-first essentielle : empêche le scroll-bounce et le zoom sauvage des navigateurs tactiles -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>POC - Animation Apparition Carte 3D Mobile-First</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <h1 id="status-text">Clique ou tape sur la carte pour la retourner</h1>
+    
+    <!-- Point d'injection du module de carte tridimensionnel -->
+    <div id="poc-container"></div>
+
+    <!-- Filtre d'opacité d'arrière-plan gérant l'isolement visuel lors de la mise au point -->
+    <div id="overlay"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
