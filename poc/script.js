@@ -94,6 +94,7 @@ function setupInteractiveEvents(wrapper) {
       isFlipped = true;
       wrapper.classList.add('flipped');
 
+      // Attente du timing de fin de transition pour l'impact haptique et visuel
       setTimeout(() => {
         if (navigator.vibrate) navigator.vibrate(15);
         wrapper.classList.add('impact-shake');
@@ -105,7 +106,7 @@ function setupInteractiveEvents(wrapper) {
       statusText.textContent = "PC : Maintiens le clic pour inspecter. Mobile : Glisse ton doigt ou incline le téléphone.";
     }
 
-    // Gestion asynchrone sécurisée de l'API d'orientation Apple
+    // Gestion asynchrone sécurisée de l'API d'orientation Apple (iOS 13+)
     if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
       try {
         const permissionState = await DeviceOrientationEvent.requestPermission();
@@ -119,12 +120,12 @@ function setupInteractiveEvents(wrapper) {
       }
     }
 
-    // MISE EN CACHE DE SÉCURITÉ : Calcule les dimensions de la carte zoomée APRÈS sa mise en place (fin de transition)
+    // MISE EN CACHE DE SÉCURITÉ : Calcule les dimensions après amortissement complet (Flip + Secousse)
     setTimeout(() => {
       if (isZoomed) cachedRect = card.getBoundingClientRect();
-    }, 450);
+    }, 800);
 
-    // ACTIVATION DES ÉCOUTEURS VOLATILS : On n'écoute la quête 3D que maintenant
+    // ACTIVATION DES ÉCOUTEURS VOLATILS EN MODE ZOOM
     activateMovableListeners();
   });
 
@@ -139,9 +140,9 @@ function setupInteractiveEvents(wrapper) {
     isZoomed = false;
     isHolding = false;
     isCalibrated = false;
-    cachedRect = null; // Purge du cache
+    cachedRect = null; // Purge du cache matériel
 
-    // DÉSACTIVATION DES ÉCOUTEURS VOLATILS : Libère la charge CPU du navigateur immédiatement
+    // DÉSACTIVATION DES ÉCOUTEURS VOLATILS : Libère la charge CPU
     deactivateMovableListeners();
 
     wrapper.classList.remove('zoomed', 'grabbing');
@@ -163,11 +164,10 @@ function setupInteractiveEvents(wrapper) {
     isHolding = true;
     wrapper.classList.add('grabbing');
     card.style.transition = 'none';
-    // Recalcule le rect au cas où le navigateur a subi un resize entre-temps
     cachedRect = card.getBoundingClientRect();
   }
 
-  function onMouseUp() {
+  onMouseUp = function () {
     if (isHolding) {
       isHolding = false;
       wrapper.classList.remove('grabbing');
@@ -199,7 +199,7 @@ function setupInteractiveEvents(wrapper) {
     if (shine) shine.style.opacity = '0';
   }
 
-  // Branchement des déclencheurs de base stables
+  // Connexion des déclencheurs
   wrapper.addEventListener('mousedown', onMouseDown);
   window.addEventListener('mouseup', onMouseUp);
   wrapper.addEventListener('touchstart', onTouchStart, { passive: true });
@@ -229,9 +229,9 @@ function setupInteractiveEvents(wrapper) {
     const isTouch = !!e.touches;
     if (!isTouch && !isHolding) return;
 
-    // Utilisation des coordonnées en cache (Gain CPU majeur : évite le relayout de page)
     const rect = cachedRect || card.getBoundingClientRect();
 
+    // Correction de l'indexation de l'objet Touch pour mobile
     const clientX = isTouch ? e.touches[0].clientX : e.clientX;
     const clientY = isTouch ? e.touches[0].clientY : e.clientY;
 

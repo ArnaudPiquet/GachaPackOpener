@@ -253,3 +253,32 @@ h1 {
         font-size: 18px !important;
     }
 }
+
+/* ==========================================================================
+   6. ANIMATION DE MICRO-VIBRATION VISUELLE COMPATIBLE SAFARI (iOS FIX)
+   ========================================================================== */
+
+/* FIX COMPLET IOS : On applique la secousse sur le wrapper externe 2D au lieu de l'élément 3D interne */
+.card-perspective-wrapper.impact-shake {
+    animation: safari-impact-vibration 0.15s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes safari-impact-vibration {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    20%, 60% { transform: translate(calc(-50% - 3px), calc(-50% + 1px)) scale(0.98); }
+    40%, 80% { transform: translate(calc(-50% + 3px), calc(-50% - 1px)) scale(1.02); }
+}
+
+/* Version de repos pour éviter d'impacter la petite carte si elle vibre au repos */
+@media (min-width: 768px) {
+    /* Si la carte n'est pas zoomée, le wrapper n'a pas besoin de translate(-50%, -50%) */
+    .card-perspective-wrapper.impact-shake:not(.zoomed) {
+        animation: safari-impact-vibration-small 0.15s cubic-bezier(.36,.07,.19,.97) both;
+    }
+}
+
+@keyframes safari-impact-vibration-small {
+    0%, 100% { transform: scale(1); }
+    20%, 60% { transform: translate(-2px, 1px) scale(0.98); }
+    40%, 80% { transform: translate(2px, -1px) scale(1.02); }
+}
