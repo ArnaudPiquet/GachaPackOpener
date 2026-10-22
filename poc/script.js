@@ -19,6 +19,8 @@ const cardData = {
 let isZoomed = false;   // Verrouille le positionnement absolu au centre de l'écran
 let isFlipped = false;  // Mémorise la révélation de la carte pour empêcher la marche arrière
 let isHolding = false;  // PC: état du clic | Mobile: état de contact tactile continu (prioritaire sur le Gyro)
+let isCalibrated = false;   // Indique si le point zéro a été enregistré
+let baseAlpha = 0, baseBeta = 0, baseGamma = 0; // Stocke la position neutre de l'iPhone
 
 /**
  * Pioche aléatoire uniforme au sein de la structure de données
@@ -122,7 +124,7 @@ function setupInteractiveEvents(wrapper) {
         // ----------------------------------------------------
     });
 
-    // MÈCANISME 2 : Fermeture du mode focus (Conserve la face visible sur le plateau)
+    // MÉCANISME 2 : Sortie du focus de zoom via clic/tap d'arrière-plan
     if (overlay) {
         overlay.addEventListener('click', unzoomCard);
     }
@@ -130,6 +132,7 @@ function setupInteractiveEvents(wrapper) {
     function unzoomCard() {
         isZoomed = false;
         isHolding = false;
+        isCalibrated = false; // REZÉRO : On réinitialise la calibration pour la prochaine carte
         
         wrapper.classList.remove('zoomed', 'grabbing'); 
         if (overlay) overlay.classList.remove('active');
@@ -141,6 +144,7 @@ function setupInteractiveEvents(wrapper) {
         card.style.boxShadow = '0 4px 8px rgba(0,0,0,0.5)';
         if (shine) shine.style.opacity = '0';
     }
+
 
     // MÈCANISME 3 : Gestion de l'interception et de l'ancrage tactile / curseur
     
@@ -236,20 +240,41 @@ function setupInteractiveEvents(wrapper) {
     window.addEventListener('mousemove', handleMove);
     window.addEventListener('touchmove', handleMove, { passive: false });
 
-    // MÈCANISME 5 : Analyse gyroscopique tridimensionnelle (Device Orientation)
+// MÉCANISME 6 : Moteur pour le Gyroscope avec Calibration au Point Zéro
     window.addEventListener('deviceorientation', (e) => {
-        // Sécurité : Ne s'active que si aucun doigt ne touche l'écran, pour éviter les micro-saccades concurrentes
+        // Ne s'active que si la carte est zoomée, révélée et qu'aucun doigt ne touche l'écran
         if (!isZoomed || !isFlipped || isHolding) return;
 
-        let totalX = e.gamma; // Axe d'inclinaison latéral (Gaucherie/Droitisation)
-        let totalY = e.beta;  // Axe d'inclinaison longitudinal (Tir d'assiette)
+        let currentAlpha = e.alpha;
+        let currentBeta = e.beta;
+        let currentGamma = e.gamma;
 
-        if (totalX === null || totalY === null) return;
+        if (currentGamma === null || currentBeta === null) return;
 
-        // Normalisation angulaire : calibration sur un décalage étalon de 25°
-        let px = totalX / 25;
-        let py = (totalY - 45) / 25; // Compensation ergonomique de l'angle naturel de lecture à 45°
+        // PREMIÈRE LECTURE : L'utilisateur vient d'ouvrir la carte, on fige sa position actuelle comme le "Plat"
+        if (!isCalibrated) {
+            baseAlpha = currentAlpha;
+            baseBeta = currentBeta;
+            baseGamma = currentGamma;
+            isCalibrated = true;
+            return; // On passe cette frame pour éviter un saut visuel brusque
+        }
 
+        // CALCUL DES DELTAS : Différence entre l'orientation actuelle et la base neutre
+        let deltaX = currentGamma - baseGamma;
+        let deltaY = currentBeta - baseBeta;
+
+        // Gestion mathématique de la rotation du téléphone (passage de la barrière des 180°/-180°)
+        if (deltaX > 180) deltaX -= 360;
+        if (deltaX < -180) deltaX += 360;
+        if (deltaY > 180) deltaY -= 360;
+        if (deltaY < -180) deltaY += 360;
+
+        // Normalisation : Une inclinaison relative de 20 degrés correspond à l'amplitude maximale (0.7)
+        let px = deltaX / 25;
+        let py = deltaY / 25;
+
+        // Clamping angulaire de sécurité pour éviter les retournements de matrice
         px = Math.max(-0.7, Math.min(0.7, px));
         py = Math.max(-0.7, Math.min(0.7, py));
 
