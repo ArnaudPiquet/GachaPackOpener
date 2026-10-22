@@ -3,29 +3,6 @@
  * Optimisé pour un rendu constant à 60 FPS (Zéro Layout Thrashing & Écouteurs Volatils)
  */
 
-
-// --- POLYFILL DE VIBRATION POUR IOS ---
-// Crée un pont technique en interceptant l'API "navigator.vibrate" pour Safari
-if (!("vibrate" in navigator)) {
-    navigator.vibrate = function(pattern) {
-        // Crée un élément natif éphémère qu'iOS force à vibrer
-        const dummyCheckbox = document.createElement('input');
-        dummyCheckbox.type = 'checkbox';
-        dummyCheckbox.style.position = 'fixed';
-        dummyCheckbox.style.opacity = '0';
-        dummyCheckbox.style.pointerEvents = 'none';
-        
-        document.body.appendChild(dummyCheckbox);
-        
-        // Simule un changement d'état ultra-rapide pour déclencher le Taptic Engine d'Apple
-        dummyCheckbox.click();
-        
-        setTimeout(() => {
-            dummyCheckbox.remove();
-        }, 50);
-        return true;
-    };
-}
 const cardData = {
   "series1": {
     "name": "Série 1 : Origines",
@@ -78,6 +55,7 @@ function generatePocCard() {
   const wrapper = document.createElement('div');
   wrapper.className = 'card-perspective-wrapper';
 
+  // Calque .card-glow autonome placé en arrière-plan immédiat
   wrapper.innerHTML = `
         <div class="card-glow ${cardInfo.rarity}"></div>
         <div class="card">
@@ -114,8 +92,8 @@ function setupInteractiveEvents(wrapper) {
 
       // Attente de la fin du retournement CSS (600ms) pour l'impact lumineux et haptique
       setTimeout(() => {
-        if (navigator.vibrate) navigator.vibrate(15); // Android
-        wrapper.classList.add('holo-flash'); // Éclair + Aura de rareté
+        if (navigator.vibrate) navigator.vibrate(15); // Déclenchement physique exclusif Android
+        wrapper.classList.add('holo-flash'); // Éclair + Aura de rareté visuelle sur PC & iOS
 
         setTimeout(() => {
           wrapper.classList.remove('holo-flash');
@@ -274,7 +252,7 @@ function setupInteractiveEvents(wrapper) {
 
     const rect = cachedRect || card.getBoundingClientRect();
 
-    // PROTECTION FIX WORKAROUND IOS : Ciblage strict de l'index 0 du tableau de points touchés
+    // Extraction robuste du premier point d'impact tactile
     const clientX = isTouch ? e.touches[0].clientX : e.clientX;
     const clientY = isTouch ? e.touches[0].clientY : e.clientY;
 
@@ -290,10 +268,8 @@ function setupInteractiveEvents(wrapper) {
     card.style.transition = 'none';
     apply3DEffect(px, py);
   }
-
   function handleGyro(e) {
     if (!isZoomed || !isFlipped || isHolding || !isGyroAllowed) return;
-
     const currentAlpha = e.alpha;
     const currentBeta = e.beta;
     const currentGamma = e.gamma;
