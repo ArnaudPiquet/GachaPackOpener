@@ -55,7 +55,9 @@ function generatePocCard() {
   const wrapper = document.createElement('div');
   wrapper.className = 'card-perspective-wrapper';
 
+  // AJOUT : Insertion du calque d'arrière-plan autonome .card-glow
   wrapper.innerHTML = `
+        <div class="card-glow ${cardInfo.rarity}"></div>
         <div class="card">
             <div class="card-flipper">
                 <div class="card-back"><div class="card-back-pattern">?</div></div>
@@ -94,11 +96,15 @@ function setupInteractiveEvents(wrapper) {
       isFlipped = true;
       wrapper.classList.add('flipped');
 
-      // Attente du timing de fin de transition pour l'impact haptique et visuel
+      // Attente du timing de fin de transition (600ms) pour déclencher l'impact lumineux et haptique
       setTimeout(() => {
-        if (navigator.vibrate) navigator.vibrate(15);
-        wrapper.classList.add('impact-shake');
-        setTimeout(() => wrapper.classList.remove('impact-shake'), 160);
+        if (navigator.vibrate) navigator.vibrate(15); // Vibration matérielle Android
+
+        wrapper.classList.add('holo-flash');
+
+        setTimeout(() => {
+          wrapper.classList.remove('holo-flash');
+        }, 600);
       }, 600);
     }
 
@@ -167,7 +173,7 @@ function setupInteractiveEvents(wrapper) {
     cachedRect = card.getBoundingClientRect();
   }
 
-  onMouseUp = function () {
+  const onMouseUp = function () {
     if (isHolding) {
       isHolding = false;
       wrapper.classList.remove('grabbing');
@@ -192,6 +198,8 @@ function setupInteractiveEvents(wrapper) {
     }
   }
 
+  document.addEventListener('mouseup', onMouseUp);
+
   function resetCardPosition() {
     card.style.transition = 'transform 0.3s ease, box-shadow 0.3s ease';
     card.style.transform = 'rotateX(0deg) rotateY(0deg)';
@@ -201,7 +209,6 @@ function setupInteractiveEvents(wrapper) {
 
   // Connexion des déclencheurs
   wrapper.addEventListener('mousedown', onMouseDown);
-  window.addEventListener('mouseup', onMouseUp);
   wrapper.addEventListener('touchstart', onTouchStart, { passive: true });
   window.addEventListener('touchend', onTouchEnd);
 
@@ -231,7 +238,6 @@ function setupInteractiveEvents(wrapper) {
 
     const rect = cachedRect || card.getBoundingClientRect();
 
-    // Correction de l'indexation de l'objet Touch pour mobile
     const clientX = isTouch ? e.touches[0].clientX : e.clientX;
     const clientY = isTouch ? e.touches[0].clientY : e.clientY;
 

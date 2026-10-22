@@ -255,30 +255,86 @@ h1 {
 }
 
 /* ==========================================================================
-   6. ANIMATION DE MICRO-VIBRATION VISUELLE COMPATIBLE SAFARI (iOS FIX)
+   6. MOTEUR D'ILLUMINATION ET FLASH DE RARETÉ (CONSOLIDÉ SANS GLITCH)
    ========================================================================== */
 
-/* FIX COMPLET IOS : On applique la secousse sur le wrapper externe 2D au lieu de l'élément 3D interne */
-.card-perspective-wrapper.impact-shake {
-    animation: safari-impact-vibration 0.15s cubic-bezier(.36,.07,.19,.97) both;
+/* Doublure lumineuse externe gérant exclusivement le halo de fond (Back Glow) */
+.card-glow {
+    position: absolute;
+    width: 120px;
+    height: 168px;
+    border-radius: 9px;
+    pointer-events: none;
+    opacity: 0;
+    filter: blur(25px); /* Diffuse magnifiquement la lumière à l'extérieur des bords */
+    z-index: 0; /* Reste sous la carte pour ne pas bloquer les textes */
+    transition: all 0.4s ease;
 }
 
-@keyframes safari-impact-vibration {
-    0%, 100% { transform: translate(-50%, -50%) scale(1); }
-    20%, 60% { transform: translate(calc(-50% - 3px), calc(-50% + 1px)) scale(0.98); }
-    40%, 80% { transform: translate(calc(-50% + 3px), calc(-50% - 1px)) scale(1.02); }
+/* Redimensionnement coordonné de l'aura au format Zoomé Mobile */
+.card-perspective-wrapper.zoomed .card-glow {
+    width: 70vw;
+    height: 98vw;
+    max-width: 275px;
+    max-height: 385px;
+    border-radius: 18px;
 }
 
-/* Version de repos pour éviter d'impacter la petite carte si elle vibre au repos */
+/* Échelonnage au repos et au focus pour moniteurs Desktop */
 @media (min-width: 768px) {
-    /* Si la carte n'est pas zoomée, le wrapper n'a pas besoin de translate(-50%, -50%) */
-    .card-perspective-wrapper.impact-shake:not(.zoomed) {
-        animation: safari-impact-vibration-small 0.15s cubic-bezier(.36,.07,.19,.97) both;
+    .card-glow {
+        width: 150px;
+        height: 210px;
+        border-radius: 11px;
+    }
+    .card-perspective-wrapper.zoomed .card-glow {
+        width: 275px;
+        height: 385px;
+        border-radius: 20px;
     }
 }
 
-@keyframes safari-impact-vibration-small {
-    0%, 100% { transform: scale(1); }
-    20%, 60% { transform: translate(-2px, 1px) scale(0.98); }
-    40%, 80% { transform: translate(2px, -1px) scale(1.02); }
+/* Calque de balayage flash blanc interne (Front Layer) */
+.card-front::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        rgba(255,255,255,0) 0%, 
+        rgba(255,255,255,0.9) 50%, 
+        rgba(255,255,255,0) 100%
+    );
+    transform: skewX(-20deg);
+    pointer-events: none;
+    opacity: 0;
 }
+
+/* --- ACTION : DÉCLENCHEMENT DU SWELL DE FLASH (FRONT) --- */
+.card-perspective-wrapper.holo-flash .card-front::after {
+    animation: flash-sweep 0.4s ease-out both;
+}
+
+@keyframes flash-sweep {
+    0% { left: -150%; opacity: 1; }
+    100% { left: 150%; opacity: 0; }
+}
+
+/* --- ACTION : EXPANSION ET EFFACEMENT DE L'AURA RADIATE (BACK) --- */
+.card-perspective-wrapper.holo-flash .card-glow {
+    animation: glow-burst 0.8s cubic-bezier(0.25, 1, 0.5, 1) both;
+}
+
+@keyframes glow-burst {
+    0% { opacity: 0; transform: scale(0.9); }
+    30% { opacity: 1; transform: scale(1.15); }
+    100% { opacity: 0; transform: scale(1); }
+}
+
+/* Cartographie des tonalités chromatiques par rareté affectées à la doublure */
+.card-glow.commune { background: rgba(127, 140, 141, 0.8); }
+.card-glow.peu-commune { background: rgba(39, 174, 96, 0.9); }
+.card-glow.rare { background: rgba(41, 128, 185, 0.9); }
+.card-glow.rare-holo { background: rgba(241, 196, 15, 1); }
