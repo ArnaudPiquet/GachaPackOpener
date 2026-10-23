@@ -94,10 +94,7 @@ h1 {
     opacity: 0.3;
 }
 
-/* ==========================================================================
-   CORRECTIF : ÉRADICATION DES COINS CARRÉS (ANTI-LEAK FLASH)
-   ========================================================================== */
-
+/* ANTI-LEAK FLASH : Éradication des coins carrés */
 .card-front {
     font-weight: bold;
     text-align: center;
@@ -105,23 +102,19 @@ h1 {
     font-size: 10px;
     border: 2px solid transparent;
     transform: rotateY(180deg);
-    
-    /* DOUBLE SÉCURITÉ DE MASQUAGE MATÉRIEL */
-    isolation: isolate; /* Empêche les reflets enfants (::after) de baver à l'extérieur */
-    clip-path: inset(0 round 9px); /* Force un masque vectoriel aux angles arrondis parfaits */
+    isolation: isolate;
+    clip-path: inset(0 round 9px);
 }
 
-/* On applique le même masque vectoriel au format zoomé */
 .card-perspective-wrapper.zoomed .card-front {
     font-size: 14px !important;
-    clip-path: inset(0 round 18px) !important; /* Calé sur le border-radius de 18px du focus mobile */
+    clip-path: inset(0 round 18px) !important;
 }
 
-/* On applique le même masque vectoriel au format grand écran (Desktop) */
 @media (min-width: 768px) {
     .card-perspective-wrapper.zoomed .card-front {
         font-size: 18px !important;
-        clip-path: inset(0 round 20px) !important; /* Calé sur le border-radius de 20px du focus desktop */
+        clip-path: inset(0 round 20px) !important;
     }
 }
 
@@ -191,8 +184,6 @@ h1 {
     top: 50% !important;
     left: 50% !important;
     transform: var(--pile-transform) !important;
-    
-    /* NOUVEAU : Devient visible et cliquable UNIQUEMENT une fois positionnée au centre */
     opacity: 1 !important;
     pointer-events: auto !important;
 }
@@ -337,56 +328,24 @@ h1 {
 #inventory-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; min-height: 180px; padding: 10px; background: rgba(0, 0, 0, 0.2); border-radius: 12px; }
 #inventory-grid .card-perspective-wrapper { position: relative !important; top: auto !important; left: auto !important; transform: none !important; cursor: default; }
 #inventory-grid .card { cursor: default; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
-
 /* ==========================================================================
-   9. ANIMATIONS SPÉCIALES DE FLUX (TAS ET RANGEMENT)
-   ========================================================================== */
-/* Force la carte à rester droite UNIQUEMENT si elle n'est pas en train d'être éjectée */
-.card-perspective-wrapper.zoomed.active-top-card:not(.send-to-inventory),
-.card-perspective-wrapper.zoomed.flipped:not(.send-to-inventory) {
-    transform: translate(-50%, -50%) rotateZ(0deg) !important;
-    transition: transform 0.4s ease, box-shadow 0.4s ease !important;
-}
-
-/* ==========================================================================
-   NOUVELLE ANIMATION : ÉJECTION CINÉTIQUE VERS LE HAUT
-   ========================================================================== */
-/* ==========================================================================
-   MOTEUR D'ÉJECTION CORRIGÉ (PRIORITÉ DE PROJECTION CONSERVÉE)
-   ========================================================================== */
-
-/* Maintient la carte droite au centre de l'écran pendant son inspection */
+9. ANIMATIONS SPÉCIALES DE FLUX (TAS ET RANGEMENT)
+========================================================================== */
+/* Alignement redressé stable de la carte active au premier plan */
 .card-perspective-wrapper.zoomed.active-top-card,
 .card-perspective-wrapper.zoomed.flipped {
-    transform: translate(-50%, -50%) rotateZ(0deg) !important;
+transform: translate(-50%, -50%) rotateZ(0deg) !important;
 }
-
-/* ==========================================================================
-   CORRECTIF : FIXATION DU FLUX PENDANT L'ÉJECTION (ANTI-DECALAGE DE TEXTE)
-   ========================================================================== */
-
+/* Propulsion cinétique isolée hors-flux */
 .card-perspective-wrapper.send-to-inventory {
-    /* En passant en fixed pendant le vol, la carte ne prend plus aucune place 
-       dans la page. Les textes en dessous ne bougeront plus d'un pixel ! */
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    
-    animation: eject-to-top 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
-    pointer-events: none;
-    z-index: 9999 !important;
+position: fixed !important;
+top: 50% !important;
+left: 50% !important;
+animation: eject-to-top 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+pointer-events: none;
+z-index: 9999 !important;
 }
-
 @keyframes eject-to-top {
-    0% {
-        transform: translate(-50%, -50%) scale(1) rotateZ(0deg);
-        opacity: 1;
-        filter: blur(0px);
-    }
-    100% {
-        /* Propulsion vers le haut, rétrécissement et rotation fluide */
-        transform: translate(-50%, -120vh) scale(0.4) rotateZ(-15deg);
-        opacity: 0;
-        filter: blur(6px);
-    }
+0% { transform: translate(-50%, -50%) scale(1) rotateZ(0deg); opacity: 1; filter: blur(0px); }
+100% { transform: translate(-50%, -120vh) scale(0.4) rotateZ(-15deg); opacity: 0; filter: blur(6px); }
 }
