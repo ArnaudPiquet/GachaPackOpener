@@ -216,13 +216,19 @@ export class CardInteractiveEngine {
     }, 400);
   }
 
-  startHolding(e) {
+ startHolding(e) {
     if (!this.state.isZoomed || !this.state.isFlipped) return;
     this.state.isHolding = true;
     this.state.hasMoved = false;
 
-    const clientX = e.touches ? e.touches.clientX : e.clientX;
-    const clientY = e.touches ? e.touches.clientY : e.clientY;
+    // Extraction robuste Cross-Platform pour l'impact initial
+    let touch = e.touches && e.touches.length ? e.touches[0] : null;
+    if (!touch && e.changedTouches && e.changedTouches.length) {
+      touch = e.changedTouches[0];
+    }
+
+    const clientX = touch ? touch.clientX : e.clientX;
+    const clientY = touch ? touch.clientY : e.clientY;
     this.dragStart = { x: clientX, y: clientY };
 
     this.wrapper.classList.add('grabbing');
@@ -257,21 +263,33 @@ export class CardInteractiveEngine {
 
   handleMove(e) {
     if (!this.state.isZoomed || !this.state.isFlipped) return;
-    const isTouch = !!e.touches;
+    const isTouch = !!e.touches || !!e.changedTouches;
     if (!isTouch && !this.state.isHolding) return;
 
     const rect = this.cachedRect || this.card.getBoundingClientRect();
-    const clientX = isTouch ? e.touches.clientX : e.clientX;
-    const clientY = isTouch ? e.touches.clientY : e.clientY;
+
+    // Extraction sécurisée du flux de coordonnées pendant le glissement
+    let touch = e.touches && e.touches.length ? e.touches[0] : null;
+    if (!touch && e.changedTouches && e.changedTouches.length) {
+      touch = e.changedTouches[0];
+    }
+
+    const clientX = touch ? touch.clientX : e.clientX;
+    const clientY = touch ? touch.clientY : e.clientY;
+
     const distanceX = Math.abs(clientX - this.dragStart.x);
     const distanceY = Math.abs(clientY - this.dragStart.y);
+
     if (distanceX > 5 || distanceY > 5) {
       this.state.hasMoved = true;
     }
+
     let px = ((clientX - rect.left) / rect.width) - 0.5;
     let py = ((clientY - rect.top) / rect.height) - 0.5;
+
     px = Math.max(-0.7, Math.min(0.7, px));
     py = Math.max(-0.7, Math.min(0.7, py));
+
     this.card.style.transition = 'none';
     this.apply3DEffect(px, py);
   }
