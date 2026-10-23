@@ -429,20 +429,60 @@ h1 {
 #open-pack-btn.hidden { opacity: 0; pointer-events: none; transform: scale(0.9); }
 
 /* ==========================================================================
-   8. ZONE D'INVENTAIRE (FIN DE REVEAL)
+   ZONE D'INVENTAIRE SÉCURISÉE (ANTI-DECALAGE ET BLOCAGE DU FLUX)
    ========================================================================== */
 #inventory-section {
-    margin-top: 60px;
+    margin-top: 40px;
     width: 100%;
     max-width: 800px;
     text-align: center;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     padding-top: 20px;
+    
+    /* DOUBLE SÉCURITÉ DE FLUX */
+    box-sizing: border-box;
 }
-#inventory-section h2 { color: #ffcb05; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
-#inventory-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; min-height: 180px; padding: 10px; background: rgba(0, 0, 0, 0.2); border-radius: 12px; }
-#inventory-grid .card-perspective-wrapper { position: relative !important; top: auto !important; left: auto !important; transform: none !important; cursor: default; }
-#inventory-grid .card { cursor: default; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+
+#inventory-section h2 { 
+    color: #ffcb05; 
+    font-size: 1.2rem; 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+    margin-bottom: 20px; 
+}
+
+#inventory-grid { 
+    display: flex; 
+    flex-wrap: wrap; 
+    justify-content: center; 
+    gap: 15px; 
+    
+    /* FIXATION DE LA GÉOMÉTRIE : */
+    height: 220px;            /* Fixe une hauteur de repos stable dès le départ */
+    max-height: 220px;        /* Bloque définitivement l'expansion vers le bas */
+    overflow-y: auto;         /* Si l'inventaire déborde, il crée une scrollbar interne propre */
+    
+    padding: 15px; 
+    background: rgba(0, 0, 0, 0.2); 
+    border-radius: 12px; 
+    box-sizing: border-box;
+}
+
+/* Optimisation de la barre de défilement de l'inventaire pour rester discret */
+#inventory-grid::-webkit-scrollbar {
+    width: 6px;
+}
+#inventory-grid::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+#inventory-grid::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+#inventory-grid::-webkit-scrollbar-thumb:hover {
+    background: #ffcb05;
+}
 /* ==========================================================================
 9. ANIMATIONS SPÉCIALES DE FLUX (TAS ET RANGEMENT)
 ========================================================================== */
