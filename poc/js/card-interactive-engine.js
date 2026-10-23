@@ -1,4 +1,3 @@
-// js/card-interactive-engine.js
 export class CardInteractiveEngine {
   constructor(wrapper) {
     this.wrapper = wrapper;
@@ -119,6 +118,7 @@ export class CardInteractiveEngine {
   unzoomCard() {
     this.toggleListeners(false);
 
+    // CONSERVATION DE FLIPPED : Émancipation synchrone de la trajectoire
     this.wrapper.classList.remove('zoomed', 'active-top-card');
     this.wrapper.style.removeProperty('transform');
     this.wrapper.classList.add('send-to-inventory');
