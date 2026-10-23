@@ -1,3 +1,4 @@
+// js/card-interactive-engine.js
 export class CardInteractiveEngine {
   constructor(wrapper) {
     this.wrapper = wrapper;
@@ -8,7 +9,7 @@ export class CardInteractiveEngine {
 
     this.state = {
       isZoomed: false,
-      isFlipped: false,
+      isFlipped: wrapper.dataset.isFlipped === "true", // Capte si la carte est déjà révélée (inventaire)
       isHolding: false,
       isCalibrated: false,
       isGyroAllowed: true,
@@ -17,7 +18,7 @@ export class CardInteractiveEngine {
 
     this.cachedRect = null;
     this.gyroBase = { alpha: 0, beta: 0, gamma: 0 };
-    this.dragStart = { x: 0, y: 0 }; 
+    this.dragStart = { x: 0, y: 0 };
 
     this.handleMove = this.handleMove.bind(this);
     this.handleGyro = this.handleGyro.bind(this);
@@ -28,34 +29,60 @@ export class CardInteractiveEngine {
 
   init() {
     this.wrapper.addEventListener('click', (e) => {
-      if (!this.state.isZoomed) return;
       e.stopPropagation();
 
       if (this.state.hasMoved) {
-        this.state.hasMoved = false; 
-        return; 
+        this.state.hasMoved = false;
+        return;
       }
 
-      const siblings = Array.from(this.wrapper.parentNode.children);
+      // ==========================================================================
+      // CAS 1 : LA CARTE EST DANS L'INVENTAIRE (RETOUR VERS LE PORTAL CENTRAL)
+      // ==========================================================================
+      if (this.wrapper.parentNode && this.wrapper.parentNode.id === 'inventory-grid') {
+        this.zoomInInventoryCard(); // Envoie la carte au centre du portal
+        return;
+      }
+
+      // ==========================================================================
+      // CAS 2 : LA CARTE EST DEJA DANS LE PORTAL CENTRAL (INSPECTION / RANGEMENT)
+      // ==========================================================================
+      if (!this.state.isZoomed) return;
+
+      // Sécurité anti-clics transversaux si on est dans un flux de pack ouvert
+      const container = document.getElementById('poc-container');
+      const siblings = container ? Array.from(container.children) : [];
       const myZIndex = parseInt(this.wrapper.style.zIndex) || 0;
       const hasCardAbove = siblings.some(sib => {
-        return sib !== this.wrapper && 
-               sib.classList.contains('zoomed') && 
-               (parseInt(sib.style.zIndex) || 0) > myZIndex;
+        return sib !== this.wrapper &&
+          sib.classList.contains('zoomed') &&
+          (parseInt(sib.style.zIndex) || 0) > myZIndex;
       });
 
       if (hasCardAbove) return;
 
       if (!this.state.isFlipped) {
-        this.revealCardFront();
+        this.revealCardFront(); // Clic booster de dos -> se retourne
       } else {
-        this.unzoomCard();
+        this.unzoomCard(); // Clic booster ou inventaire révélé -> s'éjecte et va au garage en bas
       }
     });
 
     if (this.overlay) {
       this.overlay.addEventListener('click', (e) => {
         e.stopPropagation();
+
+        // Si on inspecte une carte de l'inventaire au centre, le clic overlay la range en bas
+        const container = document.getElementById('poc-container');
+        if (container && this.wrapper.parentNode === container && this.state.isZoomed && this.state.isFlipped) {
+          // On vérifie s'il y a d'autres cartes (flux booster). S'il n'y a qu'elle, c'est une inspection d'inventaire
+          if (container.children.length === 1 && !this.packButton.classList.contains('hidden')) {
+            this.unzoomCard();
+            return;
+          }
+        }
+
+        // Garde la sécurité de blocage de l'overlay pendant l'ouverture des boosters fermés
       });
     }
 
@@ -68,7 +95,7 @@ export class CardInteractiveEngine {
   updateTopCardFocus() {
     const container = document.getElementById('poc-container');
     if (!container) return;
-    
+
     const cards = Array.from(container.children);
     cards.forEach(c => c.classList.remove('active-top-card'));
 
@@ -86,10 +113,39 @@ export class CardInteractiveEngine {
     }
   }
 
+  // ==========================================================================
+  // NOUVELLE METHODE : TRANSLATION DE L'INVENTAIRE VERS LE PORTAL CENTRAL
+  // ==========================================================================
+  zoomInInventoryCard() {
+    const container = document.getElementById('poc-container');
+    if (!container) return;
+
+    this.state.isZoomed = true;
+
+    // 1. Déplacement physique de la grille d'inventaire vers le conteneur de zoom central
+    container.appendChild(this.wrapper);
+
+    // 2. Application instantanée de la classe zoomée et de l'overlay
+    this.wrapper.classList.add('zoomed');
+    this.wrapper.style.zIndex = "1000";
+    if (this.overlay) this.overlay.classList.add('active');
+
+    // 3. Activation immédiate des capteurs 3D
+    setTimeout(() => {
+      if (this.state.isZoomed) {
+        this.cachedRect = this.card.getBoundingClientRect();
+        this.toggleListeners(true);
+      }
+    }, 100); // Délai minimal pour laisser le DOM enregistrer le changement de parent
+  }
+
+  // ==========================================================================
+  // FILÉ UNIQUE DE DISTRIBUTION ET RANGEMENT (UNIVERSAL UNZOOM)
+  // ==========================================================================
   zoomInHiddenCard(gyroAllowed) {
     this.state.isGyroAllowed = gyroAllowed;
     this.state.isZoomed = true;
-    
+
     this.wrapper.classList.add('zoomed');
     if (this.overlay) this.overlay.classList.add('active');
     if (this.packButton) this.packButton.classList.add('hidden');
@@ -108,7 +164,7 @@ export class CardInteractiveEngine {
       if (!this.state.isZoomed) return;
       this.wrapper.classList.add('holo-flash');
       this.cachedRect = this.card.getBoundingClientRect();
-      
+
       this.toggleListeners(true);
 
       setTimeout(() => this.wrapper.classList.remove('holo-flash'), 600);
@@ -118,7 +174,6 @@ export class CardInteractiveEngine {
   unzoomCard() {
     this.toggleListeners(false);
 
-    // CONSERVATION DE FLIPPED : Émancipation synchrone de la trajectoire
     this.wrapper.classList.remove('zoomed', 'active-top-card');
     this.wrapper.style.removeProperty('transform');
     this.wrapper.classList.add('send-to-inventory');
@@ -139,6 +194,7 @@ export class CardInteractiveEngine {
       this.card.style.boxShadow = '0 4px 8px rgba(0,0,0,0.5)';
       if (this.shine) this.shine.style.opacity = '0';
 
+      // Renvoie ou stocke la carte dans la grille d'inventaire en bas
       const inventoryGrid = document.getElementById('inventory-grid');
       if (inventoryGrid) {
         inventoryGrid.appendChild(this.wrapper);
@@ -150,6 +206,12 @@ export class CardInteractiveEngine {
       if (container && container.children.length === 0) {
         if (this.overlay) this.overlay.classList.remove('active');
         if (this.packButton) this.packButton.classList.remove('hidden');
+      
+        // NOUVEAU : Cache le bouton "Passer" si le joueur a tout ouvert manuellement
+        const skipButton = document.getElementById('skip-pack-btn');
+        if (skipButton) {
+          skipButton.classList.add('hidden');
+        }
       }
     }, 400);
   }
@@ -159,8 +221,8 @@ export class CardInteractiveEngine {
     this.state.isHolding = true;
     this.state.hasMoved = false;
 
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const clientX = e.touches ? e.touches.clientX : e.clientX;
+    const clientY = e.touches ? e.touches.clientY : e.clientY;
     this.dragStart = { x: clientX, y: clientY };
 
     this.wrapper.classList.add('grabbing');
@@ -172,7 +234,7 @@ export class CardInteractiveEngine {
     if (!this.state.isHolding) return;
     this.state.isHolding = false;
     this.wrapper.classList.remove('grabbing');
-    
+
     this.card.style.transition = 'transform 0.3s ease, box-shadow 0.3s ease';
     this.card.style.transform = 'rotateX(0deg) rotateY(0deg)';
     this.card.style.boxShadow = '0 20px 40px rgba(0,0,0,0.6)';
@@ -199,49 +261,37 @@ export class CardInteractiveEngine {
     if (!isTouch && !this.state.isHolding) return;
 
     const rect = this.cachedRect || this.card.getBoundingClientRect();
-    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
-    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
-
+    const clientX = isTouch ? e.touches.clientX : e.clientX;
+    const clientY = isTouch ? e.touches.clientY : e.clientY;
     const distanceX = Math.abs(clientX - this.dragStart.x);
     const distanceY = Math.abs(clientY - this.dragStart.y);
-
     if (distanceX > 5 || distanceY > 5) {
       this.state.hasMoved = true;
     }
-
     let px = ((clientX - rect.left) / rect.width) - 0.5;
     let py = ((clientY - rect.top) / rect.height) - 0.5;
-
     px = Math.max(-0.7, Math.min(0.7, px));
     py = Math.max(-0.7, Math.min(0.7, py));
-
     this.card.style.transition = 'none';
     this.apply3DEffect(px, py);
   }
-
   handleGyro(e) {
     if (!this.state.isZoomed || !this.state.isFlipped || this.state.isHolding || !this.state.isGyroAllowed) return;
     if (e.gamma === null || e.beta === null) return;
-
     if (!this.state.isCalibrated) {
       this.gyroBase = { alpha: e.alpha, beta: e.beta, gamma: e.gamma };
       this.state.isCalibrated = true;
       return;
     }
-
     let deltaX = e.gamma - this.gyroBase.gamma;
     let deltaY = e.beta - this.gyroBase.beta;
-
     if (deltaX > 180) deltaX -= 360; else if (deltaX < -180) deltaX += 360;
     if (deltaY > 180) deltaY -= 360; else if (deltaY < -180) deltaY += 360;
-
     const px = Math.max(-0.7, Math.min(0.7, deltaX / 25));
     const py = Math.max(-0.7, Math.min(0.7, deltaY / 25));
-
     this.card.style.transition = 'none';
     this.apply3DEffect(px, py);
   }
-
   toggleListeners(activate) {
     const action = activate ? 'addEventListener' : 'removeEventListener';
     window[action]('mousemove', this.handleMove);

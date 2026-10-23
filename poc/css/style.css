@@ -1,4 +1,119 @@
 /* ==========================================================================
+   INTERFACE DU HUB (MENU PRINCIPAL)
+   ========================================================================== */
+#hub-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 800px;
+    min-height: 80vh;
+    margin: 0 auto;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.hub-subtitle {
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 40px;
+    font-size: 0.9.5rem;
+}
+
+.hub-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    width: 100%;
+    padding: 0 10px;
+}
+
+/* Version adaptative : Passe en 2 colonnes sur tablette/PC */
+@media (min-width: 600px) {
+    .hub-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.hub-tile {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.hub-tile:not(.locked):hover {
+    transform: translateY(-4px);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: #ffcb05;
+}
+
+.hub-tile:not(.locked):active {
+    transform: translateY(-1px);
+}
+
+.tile-icon {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+}
+
+.tile-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #ffcb05;
+    margin-bottom: 10px;
+}
+
+.tile-desc {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.4;
+}
+
+/* Style spécifique pour la section catalogue verrouillée */
+.hub-tile.locked {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================================================
+   CONTRÔLEURS DE NAVIGATION ET RETOUR
+   ========================================================================== */
+#booster-screen {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Bouton de retour vers le Hub */
+#back-to-hub-btn {
+    align-self: flex-start;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.8);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 10px;
+}
+
+#back-to-hub-btn:hover {
+    border-color: #ffcb05;
+    color: #ffcb05;
+    background: rgba(255, 203, 5, 0.05);
+}
+
+/* Modificateur d'état pour masquer un écran proprement */
+.hidden {
+    display: none !important;
+}
+/* ==========================================================================
    1. SQUELETTE DE L'ENVIRONNEMENT DE SURFACE (MOBILE-FIRST HABITAT)
    ========================================================================== */
 body {
@@ -348,4 +463,74 @@ z-index: 9999 !important;
 @keyframes eject-to-top {
 0% { transform: translate(-50%, -50%) scale(1) rotateZ(0deg); opacity: 1; filter: blur(0px); }
 100% { transform: translate(-50%, -120vh) scale(0.4) rotateZ(-15deg); opacity: 0; filter: blur(6px); }
+}
+/* ==========================================================================
+   SÉLECTEUR D'EXTENSIONS (BOOSTER SCREEN)
+   ========================================================================== */
+.series-selector-container {
+    margin: 20px 0 10px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: opacity 0.3s ease;
+}
+
+.series-selector-container label {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.series-selector-container select {
+    background-color: #2c3e50;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    border-radius: 20px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.series-selector-container select:hover {
+    border-color: #ffcb05;
+}
+
+/* Cache le sélecteur en même temps que le bouton quand le booster est au centre */
+#booster-screen:has(#open-pack-btn.hidden) .series-selector-container {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.95);
+}
+/* ==========================================================================
+   BOUTON DE RACCOURCI "PASSER" (SKIP SYSTEM)
+   ========================================================================== */
+#skip-pack-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    padding: 8px 18px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    border-radius: 20px;
+    cursor: pointer;
+    z-index: 2500; /* S'affiche au-dessus de l'overlay et des cartes */
+    transition: all 0.2s ease;
+}
+
+#skip-pack-btn:hover {
+    background: #ffcb05;
+    border-color: #ffcb05;
+    color: #1a1a1a;
+    box-shadow: 0 0 15px rgba(255, 203, 5, 0.5);
+}
+
+#skip-pack-btn:active {
+    transform: scale(0.95);
 }

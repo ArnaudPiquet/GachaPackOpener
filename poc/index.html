@@ -1,26 +1,65 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
-    <!-- Configuration mobile-first essentielle : empêche le scroll-bounce et le zoom sauvage des navigateurs tactiles -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>POC - Animation Apparition Carte 3D Mobile-First</title>
-    <link rel="stylesheet" href="css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub - Moteur de Carte 3D</title>
+    <link rel="stylesheet" href="./css/style.css">
 </head>
-<body>
-    <button id="open-pack-btn">Ouvrir un pack</button>
 
-    
-    <!-- Point d'injection du module de carte tridimensionnel -->
-    <div id="poc-container"></div>
-    <h1 id="status-text">Clique sur le bouton pour commencer</h1>
-    <!-- Filtre d'opacité d'arrière-plan gérant l'isolement visuel lors de la mise au point -->
-    <div id="overlay"></div>
-<!-- NOUVELLE ZONE : L'inventaire de fin de tirage -->
-<div id="inventory-section">
-    <h2>Mon Inventaire</h2>
-    <div id="inventory-grid"></div>
-</div>
-    <script type="module" src="js/main.js"></script>
+<body>
+
+    <!-- ==========================================================================
+       1. INTERFACE DU HUB PRINCIPAL (DÉMARRAGE)
+       ========================================================================== -->
+    <div id="hub-screen">
+        <h1>Moteur de Cartes 3D</h1>
+        <p class="hub-subtitle">Sélectionne une application pour commencer</p>
+
+        <div class="hub-grid">
+            <!-- Tuile 1 : Vers l'ouverture de packs -->
+            <div class="hub-tile" id="go-to-booster">
+                <div class="tile-icon">✨</div>
+                <div class="tile-title">Ouverture de Pack</div>
+                <div class="tile-desc">Ouvre un booster de cartes tridimensionnel et gère ton inventaire.</div>
+            </div>
+
+            <!-- Tuile 2 : Vers le catalogue (Verrouillé) -->
+            <div class="hub-tile locked" id="go-to-catalog">
+                <div class="tile-icon">🔒</div>
+                <div class="tile-title">Catalogue</div>
+                <div class="tile-desc">Consulte ta collection et inspecte tes cartes à collectionner (Bientôt).</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+       2. INTERFACE DE L'OUVERTURE DE BOOSTER (MASQUÉE AU DÉPART)
+       ========================================================================== -->
+    <div id="booster-screen" class="hidden">
+        <!-- Bouton pour revenir en arrière vers le Hub principal -->
+        <button id="back-to-hub-btn">⬅ Retour au menu</button>
+        <!-- NOUVEAU : Sélecteur de Série -->
+        <div class="series-selector-container">
+            <label for="series-select">Choisir une extension :</label>
+            <select id="series-select">
+                <option value="series1">Série 1 : Origines (10 cartes — 33% Holo)</option>
+                <option value="series2">Série 2 : Légendes Sombres (10 cartes — 10% Holo)</option>
+            </select>
+        </div>
+        <button id="skip-pack-btn" class="hidden">Passer ⚡</button>
+        <button id="open-pack-btn">Ouvrir un pack</button>
+        <div id="poc-container"></div>
+        <div id="overlay"></div>
+
+        <div id="inventory-section">
+            <h2>Mon Inventaire</h2>
+            <div id="inventory-grid"></div>
+        </div>
+    </div>
+
+    <script type="module" src="./js/main.js"></script>
 </body>
+
 </html>
