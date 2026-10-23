@@ -8,15 +8,19 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <button id="open-pack-btn">Ouvrir un pack</button>
 
-    <h1 id="status-text">Clique ou tape sur la carte pour la retourner</h1>
     
     <!-- Point d'injection du module de carte tridimensionnel -->
     <div id="poc-container"></div>
-
+    <h1 id="status-text">Clique sur le bouton pour commencer</h1>
     <!-- Filtre d'opacité d'arrière-plan gérant l'isolement visuel lors de la mise au point -->
     <div id="overlay"></div>
-
+<!-- NOUVELLE ZONE : L'inventaire de fin de tirage -->
+<div id="inventory-section">
+    <h2>Mon Inventaire</h2>
+    <div id="inventory-grid"></div>
+</div>
     <script type="module" src="js/main.js"></script>
 </body>
 </html>

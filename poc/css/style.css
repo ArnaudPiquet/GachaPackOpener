@@ -12,9 +12,9 @@ body {
     margin: 0;
     padding: 15px;
     box-sizing: border-box;
-    perspective: 1000px; /* Profondeur du plan 3D configurée pour l'affichage de proximité tactile */
+    perspective: 1000px;
     overflow-x: hidden;
-    -webkit-tap-highlight-color: transparent; /* Désactive la surbrillance bleue d'interaction native Webkit */
+    -webkit-tap-highlight-color: transparent;
 }
 
 h1 {
@@ -32,12 +32,14 @@ h1 {
     margin-top: 30px;
     width: 100%;
 }
+#poc-container .card-perspective-wrapper {
+    opacity: 0;
+    pointer-events: none;
+}
 
 /* ==========================================================================
    2. GESTION DU REPTACLE ET DU REVERS (FLIP & GEOMETRY CONTROL)
    ========================================================================== */
-
-/* Structure de base au repos optimisée pour les viewports étroits (Ratio standard ~1.4) */
 .card {
     position: relative;
     width: 120px;
@@ -48,29 +50,27 @@ h1 {
     transition: transform 0.4s ease, box-shadow 0.4s ease, width 0.4s ease, height 0.4s ease, border-radius 0.4s ease;
 }
 
-/* Boîte interne gérant exclusivement la révolution d'apparition à 180° */
 .card-flipper {
     position: relative;
     width: 100%;
     height: 100%;
     transform-style: preserve-3d;
     transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 9px; /* Bloque définitivement les débordements angulaires */
+    border-radius: 9px;
 }
 
 .card-perspective-wrapper.flipped .card-flipper {
     transform: rotateY(180deg);
 }
 
-/* Propriétés d'étanchéité des sous-faces géométriques */
 .card-front, .card-back {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    border-radius: 9px; /* Évite l'héritage instable 'inherit' sous l'action de preserve-3d */
-    backface-visibility: hidden; /* Occulte la couche inverse lors de l'exécution de la rotation */
+    border-radius: 9px;
+    backface-visibility: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -81,7 +81,6 @@ h1 {
     transition: border-radius 0.4s ease;
 }
 
-/* --- LE DOS DE LA CARTE --- */
 .card-back {
     background: #2c3e50;
     border: 3px solid #ffcb05;
@@ -95,17 +94,15 @@ h1 {
     opacity: 0.3;
 }
 
-/* --- LA FACE DE LA CARTE --- */
 .card-front {
     font-weight: bold;
     text-align: center;
     text-transform: uppercase;
     font-size: 10px;
     border: 2px solid transparent;
-    transform: rotateY(180deg); /* Inversion préventive pour lecture à l'endroit post-rotation */
+    transform: rotateY(180deg);
 }
 
-/* Thèmes graphiques des raretés */
 .commune { background: #7f8c8d; color: #fff; }
 .peu-commune { background: #27ae60; color: #fff; }
 .rare { background: #2980b9; color: #fff; border-color: #3498db; }
@@ -146,22 +143,17 @@ h1 {
     perspective: 1000px;
     display: inline-block;
     z-index: 1;
-    touch-action: none; /* Désactive les gestes de pan/zoom natifs du navigateur lors de l'inspection */
+    touch-action: none;
 }
 
-/* Calque d'illumination de surface */
 .card-shine {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, 
-        rgba(255,255,255,0) 20%, 
-        rgba(255,255,255,0.85) 50%, 
-        rgba(255,255,255,0) 80%
-    );
-    mix-blend-mode: color-dodge; /* Sur-illumine les textures et les dégradés arrières */
+    background: linear-gradient(135deg, rgba(255,255,255,0) 20%, rgba(255,255,255,0.85) 50%, rgba(255,255,255,0) 80%);
+    mix-blend-mode: color-dodge;
     pointer-events: none;
     opacity: 0;
     transform: scale(2);
@@ -173,24 +165,25 @@ h1 {
    4. MODIFICATEURS DE FOCUS DYNAMIQUES SUR MOBILE
    ========================================================================== */
 .card-perspective-wrapper.zoomed {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1000;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: var(--pile-transform) !important;
+    
+    /* NOUVEAU : Devient visible et cliquable UNIQUEMENT une fois positionnée au centre */
+    opacity: 1 !important;
+    pointer-events: auto !important;
 }
 
-/* Redimensionnement fluide basé sur la largeur du terminal mobile (Ratio conservé) */
 .card-perspective-wrapper.zoomed .card {
     width: 70vw;
     height: 98vw; 
     max-width: 275px;  
     max-height: 385px;
     box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-    border-radius: 18px; /* Évolution coordonnée de l'arrondi au format focus */
+    border-radius: 18px;
 }
 
-/* Forçage de l'arrondi sur l'arborescence enfant pour éradiquer les fuites d'angles sous Chrome mobile */
 .card-perspective-wrapper.zoomed .card-flipper,
 .card-perspective-wrapper.zoomed .card-front,
 .card-perspective-wrapper.zoomed .card-back {
@@ -213,52 +206,22 @@ h1 {
    5. ESCALATION RESPONSIVE : CONFIGURATION GRANDS ÉCRANS (DESKTOP CONTROLS)
    ========================================================================== */
 @media (min-width: 768px) {
-    h1 {
-        font-size: 2rem;
-    }
+    h1 { font-size: 2rem; }
+    .card { width: 150px; height: 210px; border-radius: 11px; }
+    .card-flipper, .card-front, .card-back { border-radius: 11px; }
+    .card-back-pattern { font-size: 40px; }
+    .card-front { font-size: 12px; }
 
-    /* Échelle géométrique au repos pour moniteurs PC */
-    .card {
-        width: 150px;
-        height: 210px;
-        border-radius: 11px;
-    }
-    
-    .card-flipper, .card-front, .card-back {
-        border-radius: 11px;
-    }
-    
-    .card-back-pattern {
-        font-size: 40px;
-    }
-
-    .card-front {
-        font-size: 12px;
-    }
-
-    /* Échelle fixe maximale pour l'état de mise au point sur PC */
-    .card-perspective-wrapper.zoomed .card {
-        width: 275px;
-        height: 385px;
-        border-radius: 20px;
-    }
-
+    .card-perspective-wrapper.zoomed .card { width: 275px; height: 385px; border-radius: 20px; }
     .card-perspective-wrapper.zoomed .card-flipper,
     .card-perspective-wrapper.zoomed .card-front,
-    .card-perspective-wrapper.zoomed .card-back {
-        border-radius: 20px;
-    }
-
-    .card-perspective-wrapper.zoomed .card-front {
-        font-size: 18px !important;
-    }
+    .card-perspective-wrapper.zoomed .card-back { border-radius: 20px; }
+    .card-perspective-wrapper.zoomed .card-front { font-size: 18px !important; }
 }
 
 /* ==========================================================================
    6. MOTEUR D'ILLUMINATION ET FLASH DE RARETÉ (CONSOLIDÉ SANS GLITCH)
    ========================================================================== */
-
-/* Doublure lumineuse externe gérant exclusivement le halo de fond (Back Glow) */
 .card-glow {
     position: absolute;
     width: 120px;
@@ -266,12 +229,11 @@ h1 {
     border-radius: 9px;
     pointer-events: none;
     opacity: 0;
-    filter: blur(25px); /* Diffuse magnifiquement la lumière à l'extérieur des bords */
-    z-index: 0; /* Reste sous la carte pour ne pas bloquer les textes */
+    filter: blur(25px);
+    z-index: 0;
     transition: all 0.4s ease;
 }
 
-/* Redimensionnement coordonné de l'aura au format Zoomé Mobile */
 .card-perspective-wrapper.zoomed .card-glow {
     width: 70vw;
     height: 98vw;
@@ -280,21 +242,11 @@ h1 {
     border-radius: 18px;
 }
 
-/* Échelonnage au repos et au focus pour moniteurs Desktop */
 @media (min-width: 768px) {
-    .card-glow {
-        width: 150px;
-        height: 210px;
-        border-radius: 11px;
-    }
-    .card-perspective-wrapper.zoomed .card-glow {
-        width: 275px;
-        height: 385px;
-        border-radius: 20px;
-    }
+    .card-glow { width: 150px; height: 210px; border-radius: 11px; }
+    .card-perspective-wrapper.zoomed .card-glow { width: 275px; height: 385px; border-radius: 20px; }
 }
 
-/* Calque de balayage flash blanc interne (Front Layer) */
 .card-front::after {
     content: '';
     position: absolute;
@@ -302,39 +254,117 @@ h1 {
     left: -150%;
     width: 200%;
     height: 100%;
-    background: linear-gradient(90deg, 
-        rgba(255,255,255,0) 0%, 
-        rgba(255,255,255,0.9) 50%, 
-        rgba(255,255,255,0) 100%
-    );
+    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0) 100%);
     transform: skewX(-20deg);
     pointer-events: none;
     opacity: 0;
 }
 
-/* --- ACTION : DÉCLENCHEMENT DU SWELL DE FLASH (FRONT) --- */
-.card-perspective-wrapper.holo-flash .card-front::after {
-    animation: flash-sweep 0.4s ease-out both;
-}
-
+.card-perspective-wrapper.holo-flash .card-front::after { animation: flash-sweep 0.4s ease-out both; }
 @keyframes flash-sweep {
     0% { left: -150%; opacity: 1; }
     100% { left: 150%; opacity: 0; }
 }
 
-/* --- ACTION : EXPANSION ET EFFACEMENT DE L'AURA RADIATE (BACK) --- */
-.card-perspective-wrapper.holo-flash .card-glow {
-    animation: glow-burst 0.8s cubic-bezier(0.25, 1, 0.5, 1) both;
-}
-
+.card-perspective-wrapper.holo-flash .card-glow { animation: glow-burst 0.8s cubic-bezier(0.25, 1, 0.5, 1) both; }
 @keyframes glow-burst {
     0% { opacity: 0; transform: scale(0.9); }
     30% { opacity: 1; transform: scale(1.15); }
     100% { opacity: 0; transform: scale(1); }
 }
 
-/* Cartographie des tonalités chromatiques par rareté affectées à la doublure */
 .card-glow.commune { background: rgba(127, 140, 141, 0.8); }
 .card-glow.peu-commune { background: rgba(39, 174, 96, 0.9); }
 .card-glow.rare { background: rgba(41, 128, 185, 0.9); }
 .card-glow.rare-holo { background: rgba(241, 196, 15, 1); }
+
+/* ==========================================================================
+   7. BOUTON D'INTERACTION PRINCIPAL
+   ========================================================================== */
+#open-pack-btn {
+    background-color: #ffcb05;
+    color: #1a1a1a;
+    border: none;
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-radius: 25px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(255, 203, 5, 0.4);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.3s ease;
+    margin-top: 20px;
+    z-index: 10;
+}
+#open-pack-btn:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(255, 203, 5, 0.6); }
+#open-pack-btn:active { transform: scale(0.98); }
+#open-pack-btn.hidden { opacity: 0; pointer-events: none; transform: scale(0.9); }
+
+/* ==========================================================================
+   8. ZONE D'INVENTAIRE (FIN DE REVEAL)
+   ========================================================================== */
+#inventory-section {
+    margin-top: 60px;
+    width: 100%;
+    max-width: 800px;
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 20px;
+}
+#inventory-section h2 { color: #ffcb05; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
+#inventory-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; min-height: 180px; padding: 10px; background: rgba(0, 0, 0, 0.2); border-radius: 12px; }
+#inventory-grid .card-perspective-wrapper { position: relative !important; top: auto !important; left: auto !important; transform: none !important; cursor: default; }
+#inventory-grid .card { cursor: default; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+
+/* ==========================================================================
+   9. ANIMATIONS SPÉCIALES DE FLUX (TAS ET RANGEMENT)
+   ========================================================================== */
+/* Force la carte à rester droite UNIQUEMENT si elle n'est pas en train d'être éjectée */
+.card-perspective-wrapper.zoomed.active-top-card:not(.send-to-inventory),
+.card-perspective-wrapper.zoomed.flipped:not(.send-to-inventory) {
+    transform: translate(-50%, -50%) rotateZ(0deg) !important;
+    transition: transform 0.4s ease, box-shadow 0.4s ease !important;
+}
+
+/* ==========================================================================
+   NOUVELLE ANIMATION : ÉJECTION CINÉTIQUE VERS LE HAUT
+   ========================================================================== */
+/* ==========================================================================
+   MOTEUR D'ÉJECTION CORRIGÉ (PRIORITÉ DE PROJECTION CONSERVÉE)
+   ========================================================================== */
+
+/* Maintient la carte droite au centre de l'écran pendant son inspection */
+.card-perspective-wrapper.zoomed.active-top-card,
+.card-perspective-wrapper.zoomed.flipped {
+    transform: translate(-50%, -50%) rotateZ(0deg) !important;
+}
+
+/* ==========================================================================
+   CORRECTIF : FIXATION DU FLUX PENDANT L'ÉJECTION (ANTI-DECALAGE DE TEXTE)
+   ========================================================================== */
+
+.card-perspective-wrapper.send-to-inventory {
+    /* En passant en fixed pendant le vol, la carte ne prend plus aucune place 
+       dans la page. Les textes en dessous ne bougeront plus d'un pixel ! */
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    
+    animation: eject-to-top 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+    pointer-events: none;
+    z-index: 9999 !important;
+}
+
+@keyframes eject-to-top {
+    0% {
+        transform: translate(-50%, -50%) scale(1) rotateZ(0deg);
+        opacity: 1;
+        filter: blur(0px);
+    }
+    100% {
+        /* Propulsion vers le haut, rétrécissement et rotation fluide */
+        transform: translate(-50%, -120vh) scale(0.4) rotateZ(-15deg);
+        opacity: 0;
+        filter: blur(6px);
+    }
+}

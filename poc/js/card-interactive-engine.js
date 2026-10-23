@@ -1,22 +1,24 @@
-// card-interactive-engine.js
+// js/card-interactive-engine.js
 export class CardInteractiveEngine {
   constructor(wrapper) {
     this.wrapper = wrapper;
     this.card = wrapper.querySelector('.card');
     this.shine = wrapper.querySelector('.card-shine');
     this.overlay = document.getElementById('overlay');
-    this.statusText = document.getElementById('status-text');
+    this.packButton = document.getElementById('open-pack-btn');
 
     this.state = {
       isZoomed: false,
       isFlipped: false,
       isHolding: false,
       isCalibrated: false,
-      isGyroAllowed: true
+      isGyroAllowed: true,
+      hasMoved: false
     };
 
     this.cachedRect = null;
     this.gyroBase = { alpha: 0, beta: 0, gamma: 0 };
+    this.dragStart = { x: 0, y: 0 }; 
 
     this.handleMove = this.handleMove.bind(this);
     this.handleGyro = this.handleGyro.bind(this);
@@ -26,91 +28,141 @@ export class CardInteractiveEngine {
   }
 
   init() {
-    this.wrapper.addEventListener('click', (e) => this.handleInitialClick(e));
+    this.wrapper.addEventListener('click', (e) => {
+      if (!this.state.isZoomed) return;
+      e.stopPropagation();
+
+      if (this.state.hasMoved) {
+        this.state.hasMoved = false; 
+        return; 
+      }
+
+      const siblings = Array.from(this.wrapper.parentNode.children);
+      const myZIndex = parseInt(this.wrapper.style.zIndex) || 0;
+      const hasCardAbove = siblings.some(sib => {
+        return sib !== this.wrapper && 
+               sib.classList.contains('zoomed') && 
+               (parseInt(sib.style.zIndex) || 0) > myZIndex;
+      });
+
+      if (hasCardAbove) return;
+
+      if (!this.state.isFlipped) {
+        this.revealCardFront();
+      } else {
+        this.unzoomCard();
+      }
+    });
 
     if (this.overlay) {
       this.overlay.addEventListener('click', (e) => {
         e.stopPropagation();
-        this.unzoomCard();
       });
     }
 
-    this.wrapper.addEventListener('mousedown', () => this.startHolding());
+    this.wrapper.addEventListener('mousedown', (e) => this.startHolding(e));
     window.addEventListener('mouseup', this.stopHolding);
-    this.wrapper.addEventListener('touchstart', () => this.startHolding(), { passive: true });
+    this.wrapper.addEventListener('touchstart', (e) => this.startHolding(e), { passive: true });
     window.addEventListener('touchend', this.stopHolding);
   }
 
-  handleInitialClick(e) {
-    if (this.state.isZoomed) return;
-    e.stopPropagation();
+  updateTopCardFocus() {
+    const container = document.getElementById('poc-container');
+    if (!container) return;
+    
+    const cards = Array.from(container.children);
+    cards.forEach(c => c.classList.remove('active-top-card'));
 
-    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-      DeviceOrientationEvent.requestPermission()
-        .then((permissionState) => {
-          this.state.isGyroAllowed = (permissionState === 'granted');
-          this.triggerRevealSequence();
-        })
-        .catch((error) => {
-          console.error("Échec capteurs iOS :", error);
-          this.state.isGyroAllowed = false;
-          this.triggerRevealSequence();
-        });
-    } else {
-      this.state.isGyroAllowed = false;
-      this.triggerRevealSequence();
+    const hiddenCards = cards.filter(cardWrapper => cardWrapper.dataset.isFlipped !== "true");
+
+    if (hiddenCards.length > 0) {
+      const topHiddenCard = hiddenCards.reduce((max, card) => {
+        const z = parseInt(card.style.zIndex) || 0;
+        return z > max.z ? { card, z } : max;
+      }, { card: null, z: -1 });
+
+      if (topHiddenCard.card) {
+        topHiddenCard.card.classList.add('active-top-card');
+      }
     }
   }
 
-  triggerRevealSequence() {
+  zoomInHiddenCard(gyroAllowed) {
+    this.state.isGyroAllowed = gyroAllowed;
     this.state.isZoomed = true;
+    
     this.wrapper.classList.add('zoomed');
     if (this.overlay) this.overlay.classList.add('active');
+    if (this.packButton) this.packButton.classList.add('hidden');
 
-    if (!this.state.isFlipped) {
-      this.state.isFlipped = true;
-      this.wrapper.classList.add('flipped');
+    this.updateTopCardFocus();
+  }
 
-      setTimeout(() => {
-        this.wrapper.classList.add('holo-flash');
-        setTimeout(() => this.wrapper.classList.remove('holo-flash'), 600);
-      }, 600);
-    }
+  revealCardFront() {
+    this.state.isFlipped = true;
+    this.wrapper.dataset.isFlipped = "true";
+    this.wrapper.classList.add('flipped');
 
-    if (this.statusText) {
-      this.statusText.textContent = this.state.isGyroAllowed
-        ? "Mobile : Incline ton appareil ou glisse ton doigt pour inspecter."
-        : "PC : Maintiens le clic. Mobile : Glisse ton doigt pour inspecter.";
-    }
+    this.updateTopCardFocus();
 
     setTimeout(() => {
-      if (this.state.isZoomed) this.cachedRect = this.card.getBoundingClientRect();
-    }, 800);
+      if (!this.state.isZoomed) return;
+      this.wrapper.classList.add('holo-flash');
+      this.cachedRect = this.card.getBoundingClientRect();
+      
+      this.toggleListeners(true);
 
-    this.toggleListeners(true);
+      setTimeout(() => this.wrapper.classList.remove('holo-flash'), 600);
+    }, 600);
   }
 
   unzoomCard() {
-    this.state.isZoomed = false;
-    this.state.isHolding = false;
-    this.state.isCalibrated = false;
-    this.cachedRect = null;
-
     this.toggleListeners(false);
 
-    this.wrapper.classList.remove('zoomed', 'grabbing');
-    if (this.overlay) this.overlay.classList.remove('active');
-    if (this.statusText) this.statusText.textContent = "Clique/Tape sur la carte pour l'agrandir.";
+    this.wrapper.classList.remove('zoomed', 'active-top-card');
+    this.wrapper.style.removeProperty('transform');
+    this.wrapper.classList.add('send-to-inventory');
 
-    this.card.style.transition = 'transform 0.4s ease, box-shadow 0.4s ease';
-    this.card.style.transform = 'rotateX(0deg) rotateY(0deg)';
-    this.card.style.boxShadow = '0 4px 8px rgba(0,0,0,0.5)';
-    if (this.shine) this.shine.style.opacity = '0';
+    setTimeout(() => {
+      this.state.isZoomed = false;
+      this.state.isHolding = false;
+      this.state.isCalibrated = false;
+      this.cachedRect = null;
+
+      this.wrapper.classList.remove('grabbing', 'send-to-inventory');
+      this.wrapper.style.removeProperty('--pile-transform');
+      this.wrapper.style.transform = 'none';
+      this.wrapper.style.zIndex = 'auto';
+
+      this.card.style.transition = 'transform 0.4s ease, box-shadow 0.4s ease';
+      this.card.style.transform = 'rotateX(0deg) rotateY(0deg)';
+      this.card.style.boxShadow = '0 4px 8px rgba(0,0,0,0.5)';
+      if (this.shine) this.shine.style.opacity = '0';
+
+      const inventoryGrid = document.getElementById('inventory-grid');
+      if (inventoryGrid) {
+        inventoryGrid.appendChild(this.wrapper);
+      }
+
+      this.updateTopCardFocus();
+
+      const container = document.getElementById('poc-container');
+      if (container && container.children.length === 0) {
+        if (this.overlay) this.overlay.classList.remove('active');
+        if (this.packButton) this.packButton.classList.remove('hidden');
+      }
+    }, 400);
   }
 
-  startHolding() {
+  startHolding(e) {
     if (!this.state.isZoomed || !this.state.isFlipped) return;
     this.state.isHolding = true;
+    this.state.hasMoved = false;
+
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    this.dragStart = { x: clientX, y: clientY };
+
     this.wrapper.classList.add('grabbing');
     this.card.style.transition = 'none';
     this.cachedRect = this.card.getBoundingClientRect();
@@ -149,6 +201,13 @@ export class CardInteractiveEngine {
     const rect = this.cachedRect || this.card.getBoundingClientRect();
     const clientX = isTouch ? e.touches[0].clientX : e.clientX;
     const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+
+    const distanceX = Math.abs(clientX - this.dragStart.x);
+    const distanceY = Math.abs(clientY - this.dragStart.y);
+
+    if (distanceX > 5 || distanceY > 5) {
+      this.state.hasMoved = true;
+    }
 
     let px = ((clientX - rect.left) / rect.width) - 0.5;
     let py = ((clientY - rect.top) / rect.height) - 0.5;

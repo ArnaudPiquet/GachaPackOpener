@@ -1,4 +1,3 @@
-// card-dom-factory.js
 export const CardDOMFactory = {
   create(cardInfo, targetContainerId) {
     const container = document.getElementById(targetContainerId);
