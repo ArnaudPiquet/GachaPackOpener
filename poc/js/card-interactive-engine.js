@@ -216,19 +216,23 @@ export class CardInteractiveEngine {
     }, 400);
   }
 
- startHolding(e) {
+startHolding(e) {
     if (!this.state.isZoomed || !this.state.isFlipped) return;
     this.state.isHolding = true;
     this.state.hasMoved = false;
 
-    // Extraction robuste Cross-Platform pour l'impact initial
-    let touch = e.touches && e.touches.length ? e.touches[0] : null;
-    if (!touch && e.changedTouches && e.changedTouches.length) {
-      touch = e.changedTouches[0];
-    }
+    // Extraction rigoureuse du premier point de contact pour iPhone / Android
+    let clientX = e.clientX;
+    let clientY = e.clientY;
 
-    const clientX = touch ? touch.clientX : e.clientX;
-    const clientY = touch ? touch.clientY : e.clientY;
+    if (e.touches && e.touches.length > 0) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else if (e.changedTouches && e.changedTouches.length > 0) {
+      clientX = e.changedTouches[0].clientX;
+      clientY = e.changedTouches[0].clientY;
+    }
+    
     this.dragStart = { x: clientX, y: clientY };
 
     this.wrapper.classList.add('grabbing');
@@ -261,21 +265,24 @@ export class CardInteractiveEngine {
     }
   }
 
-  handleMove(e) {
+handleMove(e) {
     if (!this.state.isZoomed || !this.state.isFlipped) return;
     const isTouch = !!e.touches || !!e.changedTouches;
     if (!isTouch && !this.state.isHolding) return;
 
     const rect = this.cachedRect || this.card.getBoundingClientRect();
 
-    // Extraction sécurisée du flux de coordonnées pendant le glissement
-    let touch = e.touches && e.touches.length ? e.touches[0] : null;
-    if (!touch && e.changedTouches && e.changedTouches.length) {
-      touch = e.changedTouches[0];
-    }
+    // Extraction rigoureuse du premier point de contact pendant le glissement
+    let clientX = e.clientX;
+    let clientY = e.clientY;
 
-    const clientX = touch ? touch.clientX : e.clientX;
-    const clientY = touch ? touch.clientY : e.clientY;
+    if (e.touches && e.touches.length > 0) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else if (e.changedTouches && e.changedTouches.length > 0) {
+      clientX = e.changedTouches[0].clientX;
+      clientY = e.changedTouches[0].clientY;
+    }
 
     const distanceX = Math.abs(clientX - this.dragStart.x);
     const distanceY = Math.abs(clientY - this.dragStart.y);
