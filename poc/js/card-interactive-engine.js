@@ -2,6 +2,7 @@
 export class CardInteractiveEngine {
   constructor(wrapper) {
     this.wrapper = wrapper;
+    this.wrapper.interactiveEngine = this;
     this.card = wrapper.querySelector('.card');
     this.shine = wrapper.querySelector('.card-shine');
     this.overlay = document.getElementById('overlay');
@@ -101,16 +102,16 @@ export class CardInteractiveEngine {
 
     const hiddenCards = cards.filter(cardWrapper => cardWrapper.dataset.isFlipped !== "true");
 
-    if (hiddenCards.length > 0) {
-      const topHiddenCard = hiddenCards.reduce((max, card) => {
-        const z = parseInt(card.style.zIndex) || 0;
-        return z > max.z ? { card, z } : max;
-      }, { card: null, z: -1 });
+    const topHiddenCard = hiddenCards.reduce((max, card) => {
+      const z = parseInt(card.style.zIndex) || 0;
+      return z > max.z ? { card, z } : max;
+    }, { card: null, z: -1 });
 
-      if (topHiddenCard.card) {
-        topHiddenCard.card.classList.add('active-top-card');
-      }
+    if (topHiddenCard.card) {
+      topHiddenCard.card.classList.add('active-top-card');
     }
+
+    return topHiddenCard.card;
   }
 
   // ==========================================================================
@@ -177,6 +178,11 @@ export class CardInteractiveEngine {
     this.wrapper.classList.remove('zoomed', 'active-top-card');
     this.wrapper.style.removeProperty('transform');
     this.wrapper.classList.add('send-to-inventory');
+
+    const nextCard = this.updateTopCardFocus();
+    if (nextCard) {
+      nextCard.interactiveEngine.revealCardFront();
+    }
 
     setTimeout(() => {
       this.state.isZoomed = false;
