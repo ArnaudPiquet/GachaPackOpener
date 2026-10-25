@@ -26,8 +26,7 @@ export const CardDatabase = {
         ],
         "rareHolo": [
           { "name": "Excalibur Brillante", "img": "" },
-          { "name": "Cristal de Dragon Holo", "img": "" },
-          { "name": "Égide Cosmique", "img": "" }
+          { "name": "Lameramaqsue", "img": "" }
         ]
       }
     },
